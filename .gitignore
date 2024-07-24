@@ -1,5 +1,8 @@
 *.xtc
+*.gro
 extract_protein.py
 new_pca.py
 rmsd.py
 rmsf.py
+test.py
+__pycache__
