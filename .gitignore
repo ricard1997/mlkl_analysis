@@ -1,5 +1,7 @@
 *.xtc
 *.gro
+*.png
+*.dat
 extract_protein.py
 new_pca.py
 rmsd.py
