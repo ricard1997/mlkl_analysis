@@ -2,7 +2,7 @@ import MDAnalysis as mda
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from MDAnalysis.analysis import rms
 
 
 ############################### Code developed to analysis result from simulationf of protein in water, specifically MLKL #######################
@@ -23,7 +23,7 @@ class Protein:
 
 
 
-
+    ################### Code to extract protein ##########################
     def extract_protein(self, start = 0, stop = -1, step = 1,
                             print_info = False,
                             custom_protein = False,
@@ -48,3 +48,30 @@ class Protein:
             for ts in self.u.trajectory[start:stop:step]:
                 #print(ts.frame, protein.n_atoms)
                 W.write(protein)
+
+    # Compute RMSD of the full protein and subgroups (In case of MLKL: 4HB, brace and PsK) and save it in a txt file 
+    def get_rmsd(self, selection,start = 0, stop = -1, step=1, subgroups = None):
+        if subgroups:
+            subgroups += [selection]
+        rmsd = rms.RMSD(self.u, select = selection, groupselections = subgroups)
+
+
+        rmsd.run(start = start, stop= stop, step= step)
+        rmsd_o = rmsd.results.rmsd
+
+        columns = ["frame", "time", "full_rmsd"]
+        n_columns = rmsd_o.shape[1]
+        for i in range(n_columns-3):
+            columns += [f"group{i}"]
+
+        rmsd_df = pd.DataFrame(rmsd_o, columns = columns)
+        rmsd_df.to_csv("rmsd.dat",index = False)
+        
+
+        
+
+
+
+
+
+
