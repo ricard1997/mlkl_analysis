@@ -1,7 +1,7 @@
 import MDAnalysis as mda
 import numpy as np
 import pandas as pd
-import matplotlb.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 
@@ -10,14 +10,14 @@ import matplotlb.pyplot as plt
 
 # Defines the class protein by specifying the residues belonging by the protein and setups of the simulation such as timestep, among others
 class Protein:
-    def __init(self, gro, traj, selection_string, timestep = False, tpr = False):
+    def __init__(self, gro, traj, selection_string, timestep = False, tpr = False):
         if tpr:
             self.u = mda.Universe(tpr, traj)
         else:
             self.u = mda.Universe(gro, traj)
         self.protein = self.u.select_atoms(selection_string)
         if timestep:
-            selt.timestep = timestep
+            self.timestep = timestep
         self.selection_string = selection_string
 
 
@@ -32,29 +32,19 @@ class Protein:
                             ):
         protein = self.protein
         protein.write(output_gro)
-        
-        seelction = self.selection_string
-        if not custom_protein:
+        selection = self.selection_string
+        if custom_protein:
             selection = custom_protein
             protein = self.u.select_atoms(custom_protein)
             
-        if not print_info:
+        if print_info:
             print(f"Writting atoms corresponding to protein in residues {selection}, start frame: {start}, final frame: {stop}, step: {step}")
             n_frames = len(self.u.trajectory[start:stop:step])
             print(f"Number of frames to print: {len(self.u.trajectory[start:stop:step])}")
-            print(f"This correspond to {n_frames*timestep} timeunits")
+            if self.timestep:
+                print(f"This correspond to {n_frames*self.timestep} timeunits")
 
-
-        with mda.Writer(output_xtc, n_atoms = protein.n_atoms) as W:
-	        for ts in self.u.trajectory[start:stop:step]:
-		        W.write(protein)
-
-
-        
-
-
-
-
-    
-
-
+        with mda.Writer(output_xtc, n_atoms=protein.n_atoms) as W:
+            for ts in self.u.trajectory[start:stop:step]:
+                #print(ts.frame, protein.n_atoms)
+                W.write(protein)
