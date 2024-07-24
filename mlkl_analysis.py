@@ -68,7 +68,29 @@ class Protein:
         rmsd_df.to_csv("rmsd.dat",index = False)
         
 
+
+    
+
         
+    def get_rmsf(self, selection = None, start = 0, stop = -1, step = 1):
+        protein = self.protein.select_atoms("name CA")
+        if selection:
+            protein = self.u.select_atoms(selection)
+        
+        R = rms.RMSF(protein)
+        rmsf = R.run(start = start, stop = stop, step = step)
+
+        rmsf_values = R.results.rmsf
+        rmsf_df = pd.DataFrame()
+        rmsf_df["resnum"] = protein.resnums
+        rmsf_df["rmsf"] = rmsf_values
+        plt.plot(rmsf_df["resnum"], rmsf_df["rmsf"])
+        plt.savefig("test.png")
+        rmsf_df.to_csv("rmsf.dat", index = False)
+
+
+
+
 
 
 
