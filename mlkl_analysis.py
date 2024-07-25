@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from MDAnalysis.analysis import rms
-
+from MDAnalysis.analysis import align
 
 ############################### Code developed to analysis result from simulationf of protein in water, specifically MLKL #######################
 
@@ -19,7 +19,7 @@ class Protein:
         if timestep:
             self.timestep = timestep
         self.selection_string = selection_string
-
+        self.gro = gro
 
 
 
@@ -68,10 +68,24 @@ class Protein:
         rmsd_df.to_csv("rmsd.dat",index = False)
         
 
-
+    # Function to align protein with respect to the first frame or a reference CA structure (CA number of atoms must match)
+    def align_prot(self, selection, ref_file = None, sufix = ""):
+        mobile = self.u
+        ref = mda.Universe(self.gro)
+        if ref_file:
+            ref = mda.Universe(ref_file)
+        ref_at = ref.select_atoms(selection)
+        aligner = align.AlignTraj(mobile ,ref_at ,select= selection ,filename = f'aligned_prot{sufix}.xtc').run()
+        self.u.atoms.write(f"aligned_prot{sufix}.gro")
     
 
+
         
+
+        
+
+
+    # Compute RMSF of all the CA atoms and write it to a file
     def get_rmsf(self, selection = None, start = 0, stop = -1, step = 1):
         protein = self.protein.select_atoms("name CA")
         if selection:
