@@ -50,9 +50,10 @@ class Protein:
                 W.write(protein)
 
     # Compute RMSD of the full protein and subgroups (In case of MLKL: 4HB, brace and PsK) and save it in a txt file 
-    def get_rmsd(self, selection,start = 0, stop = -1, step=1, subgroups = None):
+    def get_rmsd(self, selection,start = 0, stop = -1, step=1, subgroups = None, sufix=""):
         if subgroups:
             subgroups += [selection]
+        print(selection, subgroups)
         rmsd = rms.RMSD(self.u, select = selection, groupselections = subgroups)
 
 
@@ -65,7 +66,7 @@ class Protein:
             columns += [f"group{i}"]
 
         rmsd_df = pd.DataFrame(rmsd_o, columns = columns)
-        rmsd_df.to_csv("rmsd.dat",index = False)
+        rmsd_df.to_csv(f"rmsd{sufix}.dat",index = False)
         
 
     # Function to align protein with respect to the first frame or a reference CA structure (CA number of atoms must match)
@@ -86,7 +87,7 @@ class Protein:
 
 
     # Compute RMSF of all the CA atoms and write it to a file
-    def get_rmsf(self, selection = None, start = 0, stop = -1, step = 1):
+    def get_rmsf(self, selection = None, start = 0, stop = -1, step = 1, sufix = ""):
         protein = self.protein.select_atoms("name CA")
         if selection:
             protein = self.u.select_atoms(selection)
@@ -98,13 +99,40 @@ class Protein:
         rmsf_df = pd.DataFrame()
         rmsf_df["resnum"] = protein.resnums
         rmsf_df["rmsf"] = rmsf_values
-        plt.plot(rmsf_df["resnum"], rmsf_df["rmsf"])
-        plt.savefig("test.png")
-        rmsf_df.to_csv("rmsf.dat", index = False)
+        #plt.plot(rmsf_df["resnum"], rmsf_df["rmsf"])
+        rmsf_df.to_csv(f"rmsf{sufix}.dat", index = False)
+
+
+    # Compute temporal RMSF of all the cA atom and write it to a file
+    def get_time_rmsf(self, selection = None, interval = 20, start = 0, step = 1, stop =-1, sufix = ""):
+        N = len(self.u.trajectory[start:stop:step])
+        n_blocks = N // interval
+        
+        protein = self.protein.select_atoms("name CA")
+        if selection:
+            protein = self.u.select_atoms(selection)
+
+        R = rms.RMSF(protein)
+
+        rmsf_df = pd.DataFrame()
+        rmsf_df["resnum"] = protein.resnums
+        rmsf_dict = {}
+        for i in range(n_blocks):
+            middle = int(0.5*(i*interval+(i+1)*interval))
+            R.run(start = i * interval, stop = ( i+1 ) * interval, step = 1)
+            rmsf_dict[f"{middle}"] = R.results.rmsf
+        rmsf_dict = pd.DataFrame(rmsf_dict)
+        rmsf_df = pd.concat([rmsf_df, rmsf_dict], axis = 1)
+        rmsf_df.to_csv(f"time_rmsf{sufix}.dat", index = False)
 
 
 
 
+
+
+
+
+        
 
 
 
