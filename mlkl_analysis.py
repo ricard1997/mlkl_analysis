@@ -125,8 +125,23 @@ class Protein:
         rmsf_df = pd.concat([rmsf_df, rmsf_dict], axis = 1)
         rmsf_df.to_csv(f"time_rmsf{sufix}.dat", index = False)
 
+    
+    # Time dependence distance between two groups of atoms
+    def distance_two(selection1, selection2, write = False, sufix = ""):
+        group1 = self.protein.select_atoms(selection1)
+        group2 = self.protein.select_atoms(selection2)
+        
+        data = []
+        for ts in self.u.trajectory:
+            vector = group2.center_of_mass()-group1.center_of_mass()
+            data.append([ts.frame, np.linalg.norm(vector)])
 
+        data = np.array(data)
+        if write:
+            data = pd.DataFrame(data, columns =["frame", "distance"])
+            data.to_csv(f"dist_{sufix}.dat")
 
+        
 
 
 
