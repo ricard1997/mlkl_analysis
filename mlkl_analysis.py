@@ -78,6 +78,10 @@ class Protein:
         ref_at = ref.select_atoms(selection)
         aligner = align.AlignTraj(mobile ,ref_at ,select= selection ,filename = f'aligned_prot{sufix}.xtc').run()
         self.u.atoms.write(f"aligned_prot{sufix}.gro")
+
+        temp_u = mda.Universe(f"aligned_prot{sufix}.gro", f"aligned_prot{sufix}.xtc")
+        for ts in temp_u.trajectory[1:2]:
+            temp_u.atoms.write(f"aligned_prot{sufix}.gro")
     
 
 
@@ -127,7 +131,7 @@ class Protein:
 
     
     # Time dependence distance between two groups of atoms
-    def distance_two(selection1, selection2, write = False, sufix = ""):
+    def distance_two(self, selection1, selection2, write = False, sufix = ""):
         group1 = self.protein.select_atoms(selection1)
         group2 = self.protein.select_atoms(selection2)
         
@@ -140,7 +144,7 @@ class Protein:
         if write:
             data = pd.DataFrame(data, columns =["frame", "distance"])
             data.to_csv(f"dist_{sufix}.dat")
-
+        return data
         
 
 
