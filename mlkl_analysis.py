@@ -4,7 +4,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from MDAnalysis.analysis import rms
 from MDAnalysis.analysis import align
-
+from sklearn.decomposition import PCA
+from sklearn.decomposition import FastICA
+from sklearn.preprocessing import StandardScaler
+from scipy.sparse.linalg import eigs
+from scipy import stats
+from deeptime.decomposition import TICA
+from deeptime.clustering import KMeans
 ############################### Code developed to analysis result from simulationf of protein in water, specifically MLKL #######################
 
 
@@ -147,14 +153,250 @@ class Protein:
         return data
         
 
+    def get_features(self, selection = None, start=0, stop=-1, step =1):
+        
+        sel = self.protein
+        sel = sel.select_atoms("name CA")
+        if selection:
+            sel = self.u.select_atoms(f"({selection}) and name CA")
+        data = []
+        for ts in self.u.trajectory[start:stop:step]:
+            zero_centered = sel.positions - sel.center_of_mass()
+            data.append(zero_centered.flatten()) #generates a vector (feature vector containing NX3 features)
 
-
-
-
+        data = np.array(data)
+        return data
         
 
 
 
+    # Function computes the PCA for CA atoms for the protein or for the atoms given
+    def pca(self, selection = None, start = 0, stop = -1, step = 1):
+        print("Make sure that your trajectory is aligned before running this function other calculation")
+        sel = self.protein
+        sel = sel.select_atoms("name CA")
+        if selection:
+            sel = self.u.select_atoms(f"({selection}) and name CA")
+        data = []
+        for ts in self.u.trajectory[start:stop:step]:
+            zero_centered = sel.positions - sel.center_of_mass()
+            data.append(zero_centered.flatten()) #generates a vector (feature vector containing NX3 features)
 
+        data = np.array(data)
+
+        #std = np.std(data, axis = 0)
+        #scaler = StandardScaler()
+        #scaler.fit(data)
+        #data = scaler.transform(data)
+
+
+        pca = PCA(n_components = 2)
+
+
+        pca.fit(data) # Find the  eigenvectors and then use them to compute the projections using the transfrom
+        proj = pca.transform(data) # Projected data into the eigenvectors, in this case [nframes, 10] we can plot the first two columns as the principal component projections
+        plt.plot(proj[:,0], label = "PC1")
+        plt.plot(proj[:,1], label = "PC2")
+        plt.savefig("test.png")
+        plt.close()
+        print(pca.explained_variance_ratio_)
+        print(pca.singular_values_)
+        return data, pca        
+
+
+
+    def tica(self, selection = None, start = 0, stop = -1, step = 1):
+        print("Make sure that your trajectory is aligned before running this function other calculation")
+        sel = self.protein
+        sel = sel.select_atoms("name CA")
+        if selection:
+            sel = self.u.select_atoms(f"({selection}) and name CA")
+        data = []
+        for ts in self.u.trajectory[start:stop:step]:
+            zero_centered = sel.positions - sel.center_of_mass()
+            data.append(zero_centered.flatten()) #generates a vector (feature vector containing NX3 features)
+
+        data = np.array(data)
+        tica = FastICA(n_components = 2)
+        tica.fit(data) # Find the  eigenvectors and then use them to compute the projections using the transfrom
+        proj = tica.transform(data) # Projected data into the eigenvectors, in this case [nframes, 10] we can plot the first two columns as the principal component projections
+        plt.plot(proj[:,0], label = "TIC1")
+        plt.plot(proj[:,1], label = "TIC2")
+        plt.legend()
+        plt.savefig("test.png")
+        #print(tica.explained_variance_ratio_)
+        #print(tica.singular_values_)
+        
+        
+
+    def compute_lag_cov(self,data, lag):
+        n_samples, n_features = data.shape
+        if lag!=0:
+            data_lagged = data[lag:]
+            data_original = data[:-lag]
+        else:
+            data_lagged = data
+            data_original = data
+            
+
+        cov = np.dot(data_original.T, data_lagged)/(n_samples-lag)
+
+        return cov
+
+
+        
+
+    def ttica(self,n_components = 2, selection = None,lag = 10, start = 0, stop = -1, step = 1):
+        print("Make sure that your trajectory is aligned before running this function other calculation")
+        sel = self.protein
+        sel = sel.select_atoms("name CA")
+        if selection:
+            sel = self.u.select_atoms(f"({selection}) and name CA")
+        data = []
+        for ts in self.u.trajectory[start:stop:step]:
+            zero_centered = sel.positions - sel.center_of_mass()
+            data.append(zero_centered.flatten()) #generates a vector (feature vector containing NX3 features)
+
+        data = np.array(data)
+
+        cov = self.compute_lag_cov(data, lag)
+        cov_o = self.compute_lag_cov(data, 0)
+        mat = np.dot(np.linalg.inv(cov_o), cov)
+        print(mat.shape)
+        eigenvalues, eigenvectors = eigs(mat, k=3, which="LM")
+
+
+        print(eigenvalues)
+
+        print(eigenvectors.shape, data.shape)
+        transformed = np.dot(data,eigenvectors)
+
+        
+
+        plt.plot(transformed[:,0], label = "PC1")
+        plt.plot(transformed[:,1], label = "PC2")
+        plt.plot(transformed[:,2], label = "PC2")
+        plt.savefig("test_ttica.png")
+        #print(pca.explained_variance_ratio_)
+        #print(pca.singular_values_)
+
+
+
+    def tttica(self,n_components = 3, selection = None,lag = 10, start = 0, stop = -1, step = 1):
+        print("Make sure that your trajectory is aligned before running this function other calculation")
+        sel = self.protein
+        sel = sel.select_atoms("name CA")
+        if selection:
+            sel = self.u.select_atoms(f"({selection}) and name CA")
+        data = []
+        for ts in self.u.trajectory[start:stop:step]:
+            zero_centered = sel.positions - sel.center_of_mass()
+            data.append(zero_centered.flatten()) #generates a vector (feature vector containing NX3 features)
+
+        data = np.array(data)
+
+
+        tica = TICA(lagtime=lag, dim=n_components)
+        tica.fit(data, lagtime = lag)
+        model = tica.fetch_model()
+        transformed = model.transform(data)
+
+        x = transformed[:,0]
+        y = transformed[:,1]
+#print(values.shape, x, y)
+
+        xmin = x.min()
+        xmax = x.max()
+        ymin = y.min()
+        ymax = y.max()
+        
+        print(transformed)
+        plt.plot(transformed[:,0], label = "PC1")
+        plt.plot(transformed[:,1], label = "PC2")
+        plt.plot(transformed[:,2], label = "PC3")
+        plt.legend()
+        plt.savefig(f"test_ttttica_{lag}.png")
+        plt.close()
+
+
+
+        X,Y = np.mgrid[xmin:xmax:500j,ymin:ymax:500j]
+        positions = np.vstack([X.ravel(),Y.ravel()])
+        values = np.vstack([x,y])
+        kernel = stats.gaussian_kde(values)
+        Z = np.reshape(kernel(positions).T,X.shape)
+
+
+
+        fig, ax = plt.subplots()
+
+        ax.imshow(np.rot90(Z), extent = [xmin,xmax,ymin,ymax])
+
+
+
+
+        plt.xlabel('PC1')
+        plt.ylabel('PC2')
+        plt.savefig(f"final_pca_{lag}.png")
+        plt.close()
+        print("tica", transformed)
+        return  transformed.copy()
+
+
+
+
+    def cluster(self, data, sufix = ""):
+        centers = KMeans(n_clusters = 3,
+                                init_strategy = "kmeans++",
+                                max_iter = 0,
+                                fixed_seed = 13,
+                                n_jobs = 8,
+                                )
+        print(data)    
+        clustering = centers.fit(data).fetch_model()
+        clustering.transform(data)
+        centers.initial_centers = clustering.cluster_centers
+        centers.max_iter = 5000
+
+        cluster_optimization = centers.fit(data).fetch_model()
+
+        
+
+        assignments = cluster_optimization.transform(data)
+
+        plt.scatter(data[:,0], data[:,1], c=assignments)
+        plt.savefig(f"clust_{sufix}.png")
+        plt.close()
+        plt.plot(assignments)
+        plt.xlabel("time $ns$")
+        plt.ylabel("cluster")
+        print("values clusering", assignments)
+        plt.savefig(f"tempclus{sufix}.png")
+
+        return cluster_optimization
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        #print(pca.explained_variance_ratio_)
+        #print(pca.singular_values_)
 
 
