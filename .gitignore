@@ -2,6 +2,7 @@
 *.gro
 *.png
 *.dat
+data
 extract_protein.py
 new_pca.py
 rmsd.py
