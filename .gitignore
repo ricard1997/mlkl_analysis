@@ -6,6 +6,7 @@ data
 extract_protein.py
 new_pca.py
 rmsd.py
+pca.py
 rmsf.py
 test.py
 __pycache__
