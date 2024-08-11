@@ -1,5 +1,6 @@
 import MDAnalysis as mda
 from mlkl_analysis import Protein
+import matplotlib as mpl
 import os
 import sys
 import matplotlib.pyplot as plt
@@ -7,7 +8,7 @@ import pandas as pd
 import numpy as np
 import MDAnalysis.analysis.encore as encore
 import seaborn as sns
-
+import re
 gro = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.gro"
 xtc = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.xtc"
 
@@ -17,14 +18,16 @@ c_dir = "/vscratch/grp-vmonje/ricardox/c-phos-project/"
 e_dir = "/vscratch/grp-vmonje/ricardox/e-phos-project/"
 
 directories = {
-                f"normalmlkl": [d_dir, "rep0", "rep1", "rep2"],
-                f"345mlkl": [d_dir, "rep0", "rep1", "rep2"],
-                f"347mlkl": [d_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[d_dir, "rep0", "rep1", "rep2"],
-                f"s345d": [c_dir,"rep0", "rep1"],
-                f"q343a": [c_dir,"rep0", "rep1"],
-                f"q343a_s345d": [c_dir,"rep0", "rep1"],
-                f"2ubpmlkl":[c_dir, "rep1"],
+    #            f"normalmlkl": [d_dir, "rep0", "rep1", "rep2"],
+    #            f"345mlkl": [d_dir, "rep0", "rep1", "rep2"],
+    #            f"347mlkl": [d_dir, "rep0", "rep1", "rep2"],
+    #            f"2pmlkl":[d_dir, "rep0", "rep1", "rep2"],
+    #            f"s345d": [e_dir,"rep0", "rep1"],
+    #            f"s345ds347d":[e_dir, "rep0"],
+                f"4btfalpha": [e_dir,"rep0"],
+#                f"q343a": [e_dir,"rep0", "rep1"],
+#                f"q343a_s345d": [e_dir,"rep0", "rep1"],
+#                f"2ubpmlkl":[e_dir, "rep1"],
 }
 
 
@@ -114,11 +117,19 @@ def extractions(directories, step = 10):
                             "found" : "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA",
                             "4hbbrace": "((resid 7-83 or resid 100-122 or resid 134-175) and name CA)"
                             }
+            selections2 = {"psk":"((resid 177-347 or resid 360-455) and name CA)",
+                            "found" : "(resid 2-78 or resid 95-117 or resid 129-170 or resid 177-455) and name CA",
+                            "4hbbrace": "((resid 2-78 or resid 95-117 or resid 129-170) and name CA)"
+                            }
             new_gro = "only_protein.gro"
             new_xtc = "only_protein.xtc"
             protein_o = Protein(new_gro, new_xtc, "protein", timestep = 0.1)
             for part in list(selections.keys()):
-                protein_o.align_prot(selections[part], ref_file = ref, sufix = part)
+                if key == "4btfalpha":
+                    print("here")
+                    protein_o.align_prot(selections[part], ref_file = ref, selection2 = selections2[part], sufix = part)
+                else:
+                    protein_o.align_prot(selections[part], ref_file = ref, sufix = part)
             
 
 
@@ -428,9 +439,18 @@ def cluster_encore(directories):
             prot = Protein("./aligned_protpsk.gro", "./aligned_protpsk.xtc", "resid 1-469")
             clusters = encore.cluster(prot.u)
             print(clusters)
-             
+
+
+
+def recorrer_string(string):
+    def minus_five(match):
+        return str(int(match.group())-5)
+    modified_string = re.sub(r"\d+", minus_five, string)
+    return modified_string
     
-def applycluster(directories, selection, projector, classifier):
+
+    
+def applycluster(directories, selection, projector, classifier, selection2= None):
 
     dict_results = {}
     for key in list(directories.keys()):
@@ -438,7 +458,18 @@ def applycluster(directories, selection, projector, classifier):
             os.chdir(f"{home}/data/{key}/{rep}/")
             print(f"working on {home}/data/{key}/{rep}/")
             prot = Protein("./aligned_protpsk.gro", "./aligned_protpsk.xtc", "resid 1-469")
+            
             data = prot.get_features(selection)
+            if key == "4btfalpha":
+                print(key)
+                selection_s = recorrer_string(selection)
+            else:
+                selection_s = selection
+            
+            data = prot.get_features(selection_s)
+            print(selection)
+
+                
             projection = projector.transform(data)
             clusterization = classifier.transform(projection)
             unique, counts = np.unique(clusterization, return_counts=True)
@@ -486,16 +517,30 @@ directories = {
 #                f"normalmlkl": [d_dir, "rep0"],
 #                f"345mlkl": [d_dir, "rep0"],
 #                #f"347mlkl": [d_dir, "rep0"],
-#                f"2pmlkl":[d_dir, "rep0"]#, "rep1"],
-                f"s345d": [e_dir,"rep1"],
+                f"2pmlkl":[d_dir, "rep0"]#, "rep1"],
+#                f"s345d": [e_dir,"rep1"],
 #                #f"q343a": [c_dir,"rep0", "rep1"],
 #                f"q343a_s345d": [c_dir,"rep0"],
 #                f"2ubpmlkl":[c_dir, "rep1"],
 #                f"s345danton":[e_dir, "rep0", "rep2", "repnew"],
-                f"s345ds347d":[e_dir, "rep0"],
+#                f"s345ds347d":[e_dir, "rep0"],
 }
 
 
+directories = {
+#                f"normalmlkl": [d_dir, "rep0", "rep1", "rep2"],
+#                f"345mlkl": [d_dir, "rep0", "rep1", "rep2"],
+#                f"347mlkl": [d_dir, "rep0", "rep1", "rep2"],
+#                f"2pmlkl":[d_dir, "rep0", "rep1", "rep2"],
+#                f"s345d": [e_dir,"rep1"],
+#                f"s345ds347d":[e_dir, "rep0"],
+                f"s345ds347dalpha":[e_dir, "rep0"],
+                f"4btfalpha": [e_dir,"rep0"],
+                f"4btfalpha_2pmlkl": [e_dir,"rep0"],
+#                f"q343a": [e_dir,"rep0", "rep1"],
+#                f"q343a_s345d": [e_dir,"rep0", "rep1"],
+#                f"2ubpmlkl":[e_dir, "rep1"],
+}
 
 extract_xtc(directories, batch = False)
 extractions(directories, step = 1)
@@ -508,7 +553,18 @@ check_files(directories)
 
 
 
-"""
+directories = {
+#                f"normalmlkl": [d_dir, "rep0"],
+#                f"345mlkl": [d_dir, "rep0"],
+#                #f"347mlkl": [d_dir, "rep0"],
+                f"2pmlkl":[d_dir, "rep0"]#, "rep1"],
+#                f"s345d": [e_dir,"rep1"],
+#                #f"q343a": [c_dir,"rep0", "rep1"],
+#                f"q343a_s345d": [c_dir,"rep0"],
+#                f"2ubpmlkl":[c_dir, "rep1"],
+#                f"s345danton":[e_dir, "rep0", "rep2", "repnew"],
+#                f"s345ds347d":[e_dir, "rep0"],
+}
 
 axvspan = [(7,26,"blue"),
                 (29,55, "blue"),
@@ -537,11 +593,16 @@ selection_string = f"(resid {axvspan[0][0]}-{axvspan[0][1]}"
 for item in axvspan[1:]:
     selection_string += f" or resid {item[0]}-{item[1]}"
 selection_string += ") and name CA"
+
+#selection_string = "(resid 7-83 or resid 100-122 or resid 129-170 or resid 177-455) and name CA"
+#selection_string = "(resid 7-83 or resid 100-122 or resid 129-170 or resid 177-455) and name CA"
+
+selection_string = "(resid 6-469 and name CA)"
+
 print(selection_string)
 
 
-
-
+"""
 data, pca = pca_for_all(directories, selection_string)
 print(data, "pca", pca)
 data_fitted = pca.transform(data)
@@ -552,8 +613,90 @@ os.chdir(f"{home}/data/2pmlkl/rep0/")
 protein = Protein("aligned_protpsk.gro", "aligned_protpsk.xtc", selection_string)
 classifier = protein.cluster(data_fitted, "pca")
 
-
 """
+
+data, tica = pca_for_all(directories, selection_string)
+print(data, "pca", tica)
+data_fitted = tica.transform(data)
+print(data_fitted.shape)
+
+    #print(data, x)
+os.chdir(f"{home}/data/2pmlkl/rep0/")
+protein = Protein("aligned_protpsk.gro", "aligned_protpsk.xtc", selection_string)
+classifier = protein.cluster(data_fitted, "tica")
+
+assignments = classifier.transform(data_fitted)
+
+
+from deeptime.markov.msm import MaximumLikelihoodMSM
+
+msm = MaximumLikelihoodMSM().fit(assignments, lagtime = 1).fetch_model()
+print(f"Number of states: {msm.n_states}")
+
+import networkx as nx
+plt.close()
+fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
+threshold = 1e-2
+title = f"Transition matrix with connectivity threshold {threshold:.0e}"
+G = nx.DiGraph()
+ax.set_title(title)
+for i in range(msm.n_states):
+    G.add_node(i, title=f"{i+1}")
+for i in range(msm.n_states):
+    for j in range(msm.n_states):
+        if msm.transition_matrix[i, j] > threshold:
+            G.add_edge(i, j, title=f"{msm.transition_matrix[i, j]:.3e}")
+
+edge_labels = nx.get_edge_attributes(G, 'title')
+pos = nx.fruchterman_reingold_layout(G)
+nx.draw_networkx_nodes(G, pos, ax=ax)
+nx.draw_networkx_labels(G, pos, ax=ax, labels=nx.get_node_attributes(G, 'title'));
+nx.draw_networkx_edges(G, pos, ax=ax, arrowstyle='-|>',
+                       connectionstyle='arc3, rad=0.3');
+
+print("plotgi")
+fig.savefig("graph.png")
+
+
+pcca = msm.pcca(n_metastable_sets=2)
+print(pcca.coarse_grained_transition_matrix)
+
+print(f"Memberships: {pcca.memberships.shape}")
+
+plt.close()
+fig, axes = plt.subplots(1, 2, figsize=(15, 10))
+
+for i in range(len(axes)):
+    ax = axes[i]
+    ax.set_title(f"Metastable set {i+1} assignment probabilities")
+    print(data_fitted.shape, pcca.memberships[assignments,i])
+    ax.scatter(*data_fitted.T, c=pcca.memberships[assignments, i], cmap=plt.cm.Blues)
+norm = mpl.colors.Normalize(vmin=0, vmax=1)
+fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=plt.cm.Blues), ax=axes, shrink=.8);
+fig.savefig("newplot.png")
+
+
+plt.close()
+
+ix = np.argsort(pcca.assignments)
+plt.figure(figsize=(18, 5))
+plt.plot(np.arange(msm.n_states)+1, pcca.metastable_distributions[0][ix], 'o', label="Metastable set 1")
+plt.plot(np.arange(msm.n_states)+1, pcca.metastable_distributions[1][ix], 'x', label="Metastable set 2")
+plt.xticks(np.arange(msm.n_states)+1, [f"{i}" for i in ix])
+plt.title("Metastable distributions")
+plt.legend()
+plt.xlabel('micro state')
+plt.ylabel('probability');
+plt.savefig("pcca.png")
+plt.close()
+
+
+plt.plot(pcca.assignments)
+plt.savefig("assignments.png")
+
+
+
 
 """
 dict_dist = {
@@ -574,26 +717,28 @@ for key in list(dict_dist.keys()):
 """
 
 
-
-"""
-
-
 directories = {
                 f"normalmlkl": [d_dir, "rep0", "rep1", "rep2"],
                 f"345mlkl": [d_dir, "rep0", "rep1", "rep2"],
                 f"347mlkl": [d_dir, "rep0", "rep1", "rep2"],
                 f"2pmlkl":[d_dir, "rep0", "rep1", "rep2"],
-                f"s345d": [c_dir,"rep0", "rep1"],
-                f"q343a": [c_dir,"rep0", "rep1"],
-                f"q343a_s345d": [c_dir,"rep0", "rep1"],
-                f"2ubpmlkl":[c_dir, "rep1"],
+                f"s345d": [e_dir,"rep0", "rep1"],
+                f"s345ds347d":[e_dir, "rep0"],
+                f"4btfalpha": [e_dir,"rep0"],
+                f"q343a": [e_dir,"rep0", "rep1"],
+                f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                f"2ubpmlkl":[e_dir, "rep1"],
 }
 
 
 
 
 
-perce = applycluster(directories, selection_string, pca, classifier)
+
+#selection_string = "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA"
+
+"""
+perce = applycluster(directories, selection_string, tica, classifier)
 perce = pd.DataFrame(perce)
 perce = perce.transpose()
 
@@ -614,8 +759,8 @@ plt.savefig("barplot.png")
 
 
 print(perce)
-
 """
+
 
 #ref = '../ref_structure.gro'
 
