@@ -76,13 +76,25 @@ class Protein:
         
 
     # Function to align protein with respect to the first frame or a reference CA structure (CA number of atoms must match)
-    def align_prot(self, selection, ref_file = None, sufix = ""):
+    def align_prot(self, selection, ref_file = None, selection2 = None, sufix = ""):
         mobile = self.u
+
         ref = mda.Universe(self.gro)
         if ref_file:
             ref = mda.Universe(ref_file)
-        ref_at = ref.select_atoms(selection)
-        aligner = align.AlignTraj(mobile ,ref_at ,select= selection ,filename = f'aligned_prot{sufix}.xtc').run()
+        if selection2:
+            ref_at = ref.select_atoms("resid 6-469")
+            ref_at.write(f"ref_structure.gro") 
+            ref_at = ref_at.select_atoms("name CA")
+            ref_at.residues.resids = list(range(1,ref_at.n_atoms+1))
+            print(ref_at.select_atoms("resid 1-50").resnames)
+        else:
+            ref_at = ref.select_atoms(selection)
+        if selection2:
+            print(self.u.select_atoms("resid 1-50 and name CA").resnames, "u", selection2)
+            aligner = align.AlignTraj(mobile ,ref_at ,select= selection2 ,filename = f'aligned_prot{sufix}.xtc').run()
+        else:
+            aligner = align.AlignTraj(mobile ,ref_at ,select= selection ,filename = f'aligned_prot{sufix}.xtc').run()
         self.u.atoms.write(f"aligned_prot{sufix}.gro")
 
         temp_u = mda.Universe(f"aligned_prot{sufix}.gro", f"aligned_prot{sufix}.xtc")
@@ -158,6 +170,7 @@ class Protein:
         sel = self.protein
         sel = sel.select_atoms("name CA")
         if selection:
+            print(selection)
             sel = self.u.select_atoms(f"({selection}) and name CA")
         data = []
         for ts in self.u.trajectory[start:stop:step]:
@@ -197,7 +210,7 @@ class Protein:
         proj = pca.transform(data) # Projected data into the eigenvectors, in this case [nframes, 10] we can plot the first two columns as the principal component projections
         plt.plot(proj[:,0], label = "PC1")
         plt.plot(proj[:,1], label = "PC2")
-        plt.savefig("test.png")
+        plt.savefig("testi.png")
         plt.close()
         print(pca.explained_variance_ratio_)
         print(pca.singular_values_)
@@ -337,16 +350,16 @@ class Protein:
 
         plt.xlabel('PC1')
         plt.ylabel('PC2')
-        plt.savefig(f"final_pca_{lag}.png")
+        plt.savefig(f"final_tica_{lag}.png")
         plt.close()
         print("tica", transformed)
-        return  transformed.copy()
+        return  data, model
 
 
 
 
     def cluster(self, data, sufix = ""):
-        centers = KMeans(n_clusters = 3,
+        centers = KMeans(n_clusters = 50,
                                 init_strategy = "kmeans++",
                                 max_iter = 0,
                                 fixed_seed = 13,
@@ -364,7 +377,7 @@ class Protein:
 
         assignments = cluster_optimization.transform(data)
 
-        plt.scatter(data[:,0], data[:,1], c=assignments)
+        plt.scatter(data[:,0], data[:,1],alpha = 0.1, c=assignments)
         plt.savefig(f"clust_{sufix}.png")
         plt.close()
         plt.plot(assignments)
