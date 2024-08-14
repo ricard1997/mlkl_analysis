@@ -357,7 +357,7 @@ class Protein:
 
 
 
-
+    # Function to cluster data using deeptime
     def cluster(self, data,n_clusters = 3, sufix = ""):
         centers = KMeans(n_clusters = n_clusters,
                                 init_strategy = "kmeans++",
