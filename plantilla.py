@@ -508,14 +508,22 @@ def applycluster(directories, selection, projector, classifier, selection2= None
 # Run section
 
 #####################################################################################################################################
+
+
+
+#------ Check files and run rmsd, rmsf, and time rmsf ----------
+
 #check_files(directories)
-    
 #extractions(directories)
 #rmsds(directories)
 #rmsfs(directories)
 #time_rmsfs(directories)
 
 
+
+# Provide a filenames for rmsd and rmsf with (i) 4hb and brace alignment
+# (ii) all the atoms found in the original pdb
+# (iii) psk domain
 
 files = ["rmsd_4hbbrace.dat", "rmsd_found.dat", "rmsd_psk.dat"]
 files = ["rmsd_4hbbrace.dat", "rmsd_found.dat", "rmsd_psk.dat"]
@@ -530,19 +538,28 @@ files = ["rmsd_4hbbrace.dat", "rmsd_found.dat", "rmsd_psk.dat"]
 
 
 
-directories = {
-#                f"normalmlkl": [d_dir, "rep0"],
-#                f"345mlkl": [d_dir, "rep0"],
-#                #f"347mlkl": [d_dir, "rep0"],
-                f"2pmlkl":[d_dir, "rep0"]#, "rep1"],
-#                f"s345d": [e_dir,"rep1"],
-#                #f"q343a": [c_dir,"rep0", "rep1"],
-#                f"q343a_s345d": [c_dir,"rep0"],
-#                f"2ubpmlkl":[c_dir, "rep1"],
-#                f"s345danton":[e_dir, "rep0", "rep2", "repnew"],
-#                f"s345ds347d":[e_dir, "rep0"],
-}
 
+
+# ---- Dictionary to plot distances betwoeen to grups of atoms
+dict_dist = {
+    "alpha_5_6": ["resid 344-352 and name CA", "resid 365-369 and name CA"],
+    "alpha_5_7": ["resid 344-352 and name CA", "resid 370-376 and name CA"],
+    "alpha_5_8": ["resid 344-352 and name CA", "resid 383-399 and name CA"],
+    "alpha_5_9": ["resid 344-352 and name CA", "resid 408-420 and name CA"],
+    "alpha_5_6_7_9": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369) and name CA"],
+}
+#for key in list(dict_dist.keys()):
+#    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = key)
+
+#for file in files:
+    #plot_rmsds(directories, file)
+    #plot_main_rmsds(directories, file)
+#    plot_all_rmsfs(directories, file.replace("rmsd", "rmsf"))
+
+
+
+
+# ----- Set up the directories we are working with ----------
 
 directories = {
 #                f"normalmlkl": [d_dir, "rep0", "rep1", "rep2"],
@@ -559,17 +576,21 @@ directories = {
 #                f"2ubpmlkl":[e_dir, "rep1"],
 }
 
+
+
 #extract_xtc(directories, batch = True)
 extractions(directories, step = 1)
 check_files(directories)
-#pca_for_all(directories, "resid 1-469")
-#tica_for_all(directories, "resid 1-469")
-#lista = [1,10,20,30,40,50,60,70, 80, 90, 100, 110, 120, 150, 200, 300]
-#for item in lista:
-    #data = tttica_for_all(directories, "resid 1-469", item)
 
 
 
+# ---------------
+
+
+
+
+
+# ------- Reset the directories we are wotking with ---------
 directories = {
 #                f"normalmlkl": [d_dir, "rep0"],
 #                f"345mlkl": [d_dir, "rep0"],
@@ -583,6 +604,9 @@ directories = {
 #                f"s345ds347d":[e_dir, "rep0"],
 }
 
+
+
+# ------ Residues corresponding to either a alpha-helix or to a B-sheet --------
 axvspan = [(7,26,"blue"),
                 (29,55, "blue"),
                 (59,83, "blue"),
@@ -606,6 +630,9 @@ axvspan = [(7,26,"blue"),
                 (450,459, "black"),
                 ]
 
+
+
+# ------ Set up a selection string for the clustering ---------
 selection_string = f"(resid {axvspan[0][0]}-{axvspan[0][1]}"
 for item in axvspan[1:]:
     selection_string += f" or resid {item[0]}-{item[1]}"
@@ -614,58 +641,56 @@ selection_string += ") and name CA"
 #selection_string = "(resid 7-83 or resid 100-122 or resid 129-170 or resid 177-455) and name CA"
 #selection_string = "(resid 7-83 or resid 100-122 or resid 129-170 or resid 177-455) and name CA"
 
+# -------- Reset the selection string dependeing on needs ------ 
 selection_string = "(resid 6-469 and name CA)"
 
 print(selection_string)
 
 
-"""
+
+
+
+
+
+
+
+# ------ Do PCA and return the data and the pca model -----
+# ------ Only one element should be in the directory ------
+# In this case we are using only 2pmlkl rep0
 data, pca = pca_for_all(directories, selection_string)
 print(data, "pca", pca)
 data_fitted = pca.transform(data)
 print(data_fitted.shape)
 
-    #print(data, x)
+
+
+# ----- Move to directory
 os.chdir(f"{home}/data/2pmlkl/rep0/")
-protein = Protein("aligned_protpsk.gro", "aligned_protpsk.xtc", selection_string)
-classifier = protein.cluster(data_fitted, "pca")
 
-"""
 
-data, tica = pca_for_all(directories, selection_string)
-print(data, "pca", tica)
-data_fitted = tica.transform(data)
-print(data_fitted.shape)
 
-    #print(data, x)
-os.chdir(f"{home}/data/2pmlkl/rep0/")
+# ------- Generates the classifier model for 2pmlkl rep0 -----------
 protein = Protein("aligned_protpsk.gro", "aligned_protpsk.xtc", selection_string)
 classifier = protein.cluster(data_fitted, n_clusters = 50,sufix = "tica")
 
 assignments = classifier.transform(data_fitted)
 
 
-from deeptime.markov.msm import MaximumLikelihoodMSM
-
-msm = MaximumLikelihoodMSM().fit(assignments, lagtime = 1).fetch_model()
-print(f"Number of states: {msm.n_states}")
-
-
+# ------- plot the cluster and its classification --------------
 plt.close()
-
-
 fig, ax = plt.subplots(1,1,figsize = (18,5))
-
 ax.scatter(*data_fitted.T, c = assignments)
 ax.scatter(*classifier.cluster_centers.T, marker = "o", c = "black")
-
-
 for i in range(classifier.n_clusters):
     ax.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
 fig.savefig("clusterannotate.png")
 
 
 
+# ----- Generates Markov State Model based on the clusters passed -----------
+from deeptime.markov.msm import MaximumLikelihoodMSM
+msm = MaximumLikelihoodMSM().fit(assignments, lagtime = 1).fetch_model()
+print(f"Number of states: {msm.n_states}")
 
 
 
@@ -684,6 +709,13 @@ fig.savefig("clusterannotate.png")
 
 
 
+
+
+
+
+
+
+# ------ Plot the trnaistion matrix neglecting the connectivity of low transition rates -----------
 import networkx as nx
 plt.close()
 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
@@ -705,81 +737,50 @@ nx.draw_networkx_nodes(G, pos, ax=ax)
 nx.draw_networkx_labels(G, pos, ax=ax, labels=nx.get_node_attributes(G, 'title'));
 nx.draw_networkx_edges(G, pos, ax=ax, arrowstyle='-|>',
                        connectionstyle='arc3, rad=0.3');
-
 print("plotgi")
 fig.savefig("graph.png")
 
 
+
+
+#--------- Use pccs to coarse grain the MSM, here i am using 3 states ---------
 pcca = msm.pcca(n_metastable_sets=3)
 print(pcca.coarse_grained_transition_matrix)
 
 
 
-########################
 
+# ---- Use membership probabilities to compute the membership for each metastable state
+# ---- In this case the criteria is the max probability is enough to belong to the cluster
 memberships = pcca.memberships
-memberships1 = memberships[:,0]
 
-colors = ["b" if value > 0.5 else "r" for value in memberships1]
-plt.close()
 mapping_colors = ["b", "g", "r"]
 max_indices = [np.argmax(row) for row in memberships]
 max_colors = [mapping_colors[np.argmax(row)] for row in memberships] # Dim number of clusters
-
-
-
-
-cluster1 = []
-cluster2 = []
-count = 0
-for color in colors:
-    if color == "b":
-        cluster1.append(count)
-    else:
-        cluster2.append(count)
-    count += 1
-   
-print(cluster1, cluster2)
 map_assignments = [max_colors[value] for value in assignments]
     
     
 
-
-
+# ----- Plot the metastable states in the principal components
+plt.close()
 plt.scatter(*data_fitted.T, c = map_assignments)
 plt.scatter(*classifier.cluster_centers.T, c = max_colors)
 for i in range(classifier.n_clusters):
-    ax.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
+    plt.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
 plt.savefig("clusterannotate_1.png")
 
-colors = ["cluster1" if value > 0.5 else "cluster2" for value in memberships1]
-colors1 = ["cluster1" if value < 0.5 else "cluster2" for value in memberships[:,1]]
-print(colors, colors1)
+
+# ------ Print the metastable stated over time
 plt.close()
-
-
-
 plt.plot([max_indices[value] for value in assignments], label = "cl1")
 plt.legend()
 plt.savefig("temporal.png")
-
 plt.close()
 
 
 
-########################
-
-
-print(f"Memberships: {pcca.memberships}")
-
-
-
-
-
-
-plt.close()
+# ----- Plot the probability of belonging to a particular metastable state
 fig, axes = plt.subplots(1, 2, figsize=(15, 10))
-
 for i in range(len(axes)):
     ax = axes[i]
     ax.set_title(f"Metastable set {i+1} assignment probabilities")
@@ -788,48 +789,12 @@ for i in range(len(axes)):
 norm = mpl.colors.Normalize(vmin=0, vmax=1)
 fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=plt.cm.Blues), ax=axes, shrink=.8);
 fig.savefig("newplot.png")
-
-
-plt.close()
-
-ix = np.argsort(pcca.assignments)
-plt.figure(figsize=(18, 5))
-plt.plot(np.arange(msm.n_states)+1, pcca.metastable_distributions[0][ix], 'o', label="Metastable set 1")
-plt.plot(np.arange(msm.n_states)+1, pcca.metastable_distributions[1][ix], 'x', label="Metastable set 2")
-plt.xticks(np.arange(msm.n_states)+1, [f"{i}" for i in ix])
-plt.title("Metastable distributions")
-plt.legend()
-plt.xlabel('micro state')
-plt.ylabel('probability');
-plt.savefig("pcca.png")
 plt.close()
 
 
-plt.plot(pcca.assignments)
-plt.savefig("assignments.png")
 
 
-
-
-"""
-dict_dist = {
-    "alpha_5_6": ["resid 344-352 and name CA", "resid 365-369 and name CA"],
-    "alpha_5_7": ["resid 344-352 and name CA", "resid 370-376 and name CA"],
-    "alpha_5_8": ["resid 344-352 and name CA", "resid 383-399 and name CA"],
-    "alpha_5_9": ["resid 344-352 and name CA", "resid 408-420 and name CA"],
-    "alpha_5_6_7_9": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369) and name CA"],
-}
-for key in list(dict_dist.keys()):
-    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = key)
-
-#for file in files:
-    #plot_rmsds(directories, file)
-    #plot_main_rmsds(directories, file)
-#    plot_all_rmsfs(directories, file.replace("rmsd", "rmsf"))
-
-"""
-
-
+# ---------- Directories to be included in the barplot of th emetastable states ------------
 directories = {
                 f"normalmlkl": [d_dir, "rep0", "rep1", "rep2"],
                 f"345mlkl": [d_dir, "rep0", "rep1", "rep2"],
@@ -849,19 +814,14 @@ directories = {
 
 
 
-
+# If not defined here, the code will continue using the selection string from the beggining which is the ideal
 #selection_string = "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA"
 
 plt.close()
-perce = applycluster(directories, selection_string, tica, classifier, original_data = data_fitted)
+perce = applycluster(directories, selection_string, pca, classifier, original_data = data_fitted)
 perce = pd.DataFrame(perce)
 perce = perce.transpose()
-perce_cluster1 = perce[[str(key) for key in cluster1]]
-perce_cluster2 = perce[[str(key) for key in cluster2]]
 
-perce1 = pd.DataFrame(perce_cluster1)
-print(perce1)
-print(perce_cluster1, perce_cluster1.sum(axis = 1))
 
 perce_melted = perce.reset_index().melt(id_vars=["index"], var_name = "Cluster", value_name = "Value")
 perce_melted["pcca"] = perce_melted["Cluster"].apply(lambda x: max_indices[int(x)])
@@ -889,8 +849,8 @@ print(perce)
 
 
 #ref = '../ref_structure.gro'
-
 #protein = Protein(gro , xtc, "protein", timestep = 0.1)
+
 
 
 #selection = "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA"
