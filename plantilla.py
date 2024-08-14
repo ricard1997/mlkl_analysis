@@ -125,7 +125,8 @@ def extractions(directories, step = 10):
             new_xtc = "only_protein.xtc"
             protein_o = Protein(new_gro, new_xtc, "protein", timestep = 0.1)
             for part in list(selections.keys()):
-                if key == "4btfalpha":
+                
+                if "alpha" in key:
                     print("here")
                     protein_o.align_prot(selections[part], ref_file = ref, selection2 = selections2[part], sufix = part)
                 else:
@@ -450,7 +451,7 @@ def recorrer_string(string):
     
 
     
-def applycluster(directories, selection, projector, classifier, selection2= None):
+def applycluster(directories, selection, projector, classifier, selection2= None, original_data = None):
 
     dict_results = {}
     for key in list(directories.keys()):
@@ -460,7 +461,7 @@ def applycluster(directories, selection, projector, classifier, selection2= None
             prot = Protein("./aligned_protpsk.gro", "./aligned_protpsk.xtc", "resid 1-469")
             
             data = prot.get_features(selection)
-            if key == "4btfalpha":
+            if "alpha" in key:
                 print(key)
                 selection_s = recorrer_string(selection)
             else:
@@ -472,6 +473,22 @@ def applycluster(directories, selection, projector, classifier, selection2= None
                 
             projection = projector.transform(data)
             clusterization = classifier.transform(projection)
+
+            
+            if len(original_data) >0 :
+                sns.kdeplot(x = original_data[:,0],y = original_data[:,1], levels = 1, thresh = 0.05)
+
+
+            plt.scatter(*projection.T, c= clusterization, alpha = 0.1)
+            plt.scatter(*classifier.cluster_centers.T, marker = "o", c = "black")
+
+
+            for i in range(classifier.n_clusters):
+                plt.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
+
+
+            plt.savefig(f"{key}{rep}classification.png")
+            plt.close()
             unique, counts = np.unique(clusterization, return_counts=True)
             percentages = counts*100/len(clusterization)
             dict_clusters = {}
@@ -542,7 +559,7 @@ directories = {
 #                f"2ubpmlkl":[e_dir, "rep1"],
 }
 
-extract_xtc(directories, batch = False)
+#extract_xtc(directories, batch = True)
 extractions(directories, step = 1)
 check_files(directories)
 #pca_for_all(directories, "resid 1-469")
@@ -623,7 +640,7 @@ print(data_fitted.shape)
     #print(data, x)
 os.chdir(f"{home}/data/2pmlkl/rep0/")
 protein = Protein("aligned_protpsk.gro", "aligned_protpsk.xtc", selection_string)
-classifier = protein.cluster(data_fitted, "tica")
+classifier = protein.cluster(data_fitted, n_clusters = 50,sufix = "tica")
 
 assignments = classifier.transform(data_fitted)
 
@@ -632,6 +649,40 @@ from deeptime.markov.msm import MaximumLikelihoodMSM
 
 msm = MaximumLikelihoodMSM().fit(assignments, lagtime = 1).fetch_model()
 print(f"Number of states: {msm.n_states}")
+
+
+plt.close()
+
+
+fig, ax = plt.subplots(1,1,figsize = (18,5))
+
+ax.scatter(*data_fitted.T, c = assignments)
+ax.scatter(*classifier.cluster_centers.T, marker = "o", c = "black")
+
+
+for i in range(classifier.n_clusters):
+    ax.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
+fig.savefig("clusterannotate.png")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import networkx as nx
 plt.close()
@@ -659,10 +710,72 @@ print("plotgi")
 fig.savefig("graph.png")
 
 
-pcca = msm.pcca(n_metastable_sets=2)
+pcca = msm.pcca(n_metastable_sets=3)
 print(pcca.coarse_grained_transition_matrix)
 
-print(f"Memberships: {pcca.memberships.shape}")
+
+
+########################
+
+memberships = pcca.memberships
+memberships1 = memberships[:,0]
+
+colors = ["b" if value > 0.5 else "r" for value in memberships1]
+plt.close()
+mapping_colors = ["b", "g", "r"]
+max_indices = [np.argmax(row) for row in memberships]
+max_colors = [mapping_colors[np.argmax(row)] for row in memberships] # Dim number of clusters
+
+
+
+
+cluster1 = []
+cluster2 = []
+count = 0
+for color in colors:
+    if color == "b":
+        cluster1.append(count)
+    else:
+        cluster2.append(count)
+    count += 1
+   
+print(cluster1, cluster2)
+map_assignments = [max_colors[value] for value in assignments]
+    
+    
+
+
+
+plt.scatter(*data_fitted.T, c = map_assignments)
+plt.scatter(*classifier.cluster_centers.T, c = max_colors)
+for i in range(classifier.n_clusters):
+    ax.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
+plt.savefig("clusterannotate_1.png")
+
+colors = ["cluster1" if value > 0.5 else "cluster2" for value in memberships1]
+colors1 = ["cluster1" if value < 0.5 else "cluster2" for value in memberships[:,1]]
+print(colors, colors1)
+plt.close()
+
+
+
+plt.plot([max_indices[value] for value in assignments], label = "cl1")
+plt.legend()
+plt.savefig("temporal.png")
+
+plt.close()
+
+
+
+########################
+
+
+print(f"Memberships: {pcca.memberships}")
+
+
+
+
+
 
 plt.close()
 fig, axes = plt.subplots(1, 2, figsize=(15, 10))
@@ -724,7 +837,9 @@ directories = {
                 f"2pmlkl":[d_dir, "rep0", "rep1", "rep2"],
                 f"s345d": [e_dir,"rep0", "rep1"],
                 f"s345ds347d":[e_dir, "rep0"],
+                f"s345ds347dalpha":[e_dir, "rep0"],
                 f"4btfalpha": [e_dir,"rep0"],
+                f"4btfalpha_2pmlkl": [e_dir,"rep0"],
                 f"q343a": [e_dir,"rep0", "rep1"],
                 f"q343a_s345d": [e_dir,"rep0", "rep1"],
                 f"2ubpmlkl":[e_dir, "rep1"],
@@ -737,18 +852,29 @@ directories = {
 
 #selection_string = "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA"
 
-"""
-perce = applycluster(directories, selection_string, tica, classifier)
+plt.close()
+perce = applycluster(directories, selection_string, tica, classifier, original_data = data_fitted)
 perce = pd.DataFrame(perce)
 perce = perce.transpose()
+perce_cluster1 = perce[[str(key) for key in cluster1]]
+perce_cluster2 = perce[[str(key) for key in cluster2]]
+
+perce1 = pd.DataFrame(perce_cluster1)
+print(perce1)
+print(perce_cluster1, perce_cluster1.sum(axis = 1))
 
 perce_melted = perce.reset_index().melt(id_vars=["index"], var_name = "Cluster", value_name = "Value")
+perce_melted["pcca"] = perce_melted["Cluster"].apply(lambda x: max_indices[int(x)])
+
+
 print(perce_melted)
 perce_melted.rename(columns={"index":"Condition"}, inplace=True)
+perce_melted = perce_melted.groupby(["Condition", "pcca"], as_index=False)["Value"].sum()
 print(perce_melted)
 plt.close()
 plt.figure(figsize=(15, 8))
-sns.barplot(data = perce_melted, x="Condition", y = "Value", hue = "Cluster")
+sns.barplot(data = perce_melted, x="Condition", y = "Value", hue = "pcca")
+print(perce_melted)
 os.chdir(home)
 plt.xlabel("Replica")
 plt.ylabel("Percentage")
@@ -759,7 +885,7 @@ plt.savefig("barplot.png")
 
 
 print(perce)
-"""
+
 
 
 #ref = '../ref_structure.gro'
