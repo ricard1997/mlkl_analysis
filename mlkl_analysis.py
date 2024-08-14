@@ -358,8 +358,8 @@ class Protein:
 
 
 
-    def cluster(self, data, sufix = ""):
-        centers = KMeans(n_clusters = 50,
+    def cluster(self, data,n_clusters = 3, sufix = ""):
+        centers = KMeans(n_clusters = n_clusters,
                                 init_strategy = "kmeans++",
                                 max_iter = 0,
                                 fixed_seed = 13,
