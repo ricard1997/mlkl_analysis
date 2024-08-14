@@ -9,6 +9,8 @@ import numpy as np
 import MDAnalysis.analysis.encore as encore
 import seaborn as sns
 import re
+import subprocess
+
 gro = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.gro"
 xtc = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.xtc"
 
@@ -499,8 +501,45 @@ def applycluster(directories, selection, projector, classifier, selection2= None
 
     return dict_results
 
-            
-    
+
+def check_file(file):
+    value = os.path.isfile(file)
+    if value:
+        print(f"File {file} exists")
+    else:
+        print(f"Files {file} does not exist, make sure it does before rerun this code")
+        return value
+
+def generate_topol(file):
+    file_w = open(file, "r")
+    words = ["CLA", "POT", "TIP3"]
+    new_topol = open(file.replace("topol.top", "new_topol.top"))
+    lines = file_w.readlines()
+    for line in lines:
+        if not any(line.startswith(word) for word in words):
+            new_topol.write(line)
+
+
+
+    # Function to extract the tpr for only the protein if all the files are present
+def generate_tprs(directories):
+    files_needed = ["topol.top", "new_prod.mdp", "aligned_protpsk.gro"]
+
+    for key in list(directories.keys()):
+        for rep in directories[key][1:]:
+            test = True
+            os.chdir(f"{directories[key][0]}/{key}/{rep}/")
+            print(f"Working on the tpr file for {directories[key][0]}/{key}/{rep}/")
+            test = check_file(f"{directories[key][0]}/{key}/{rep}/topol.top")
+            if test:
+                generate_topol(f"{directories[key][0]}/{key}/{rep}/topol.top")
+            test = check_file(f"{home}/new_prod.mdp")
+            test = check_file(f"{home}/data/{key}/{rep}/aligned_protpsk.gro")
+
+            if test:
+                subprocess.run(f"gmx grompp -f {home}/new_prod.mdp -o new_prod.tpr -c {home}/data/{key}/{rep}/aligned_protpsk.gro -r {home}/data/{key}/{rep}/aligned_protpsk.gro -p {directories[key][0]}/{key}/{rep}/new_topol.top")
+
+
 
 
 #####################################################################################################################################
@@ -559,6 +598,13 @@ dict_dist = {
 
 
 
+
+
+
+
+
+
+
 # ----- Set up the directories we are working with ----------
 
 directories = {
@@ -590,12 +636,19 @@ check_files(directories)
 
 
 
+
+
+
+
+########### The following code is th eworkflow for a markov state model with 50 clusters and then its 
+########### reduction to three metastable states
+
 # ------- Reset the directories we are wotking with ---------
 directories = {
 #                f"normalmlkl": [d_dir, "rep0"],
 #                f"345mlkl": [d_dir, "rep0"],
 #                #f"347mlkl": [d_dir, "rep0"],
-                f"2pmlkl":[d_dir, "rep0"]#, "rep1"],
+                f"2pmlkl":[e_dir, "rep0"]#, "rep1"],
 #                f"s345d": [e_dir,"rep1"],
 #                #f"q343a": [c_dir,"rep0", "rep1"],
 #                f"q343a_s345d": [c_dir,"rep0"],
@@ -796,10 +849,10 @@ plt.close()
 
 # ---------- Directories to be included in the barplot of th emetastable states ------------
 directories = {
-                f"normalmlkl": [d_dir, "rep0", "rep1", "rep2"],
-                f"345mlkl": [d_dir, "rep0", "rep1", "rep2"],
-                f"347mlkl": [d_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[d_dir, "rep0", "rep1", "rep2"],
+                f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
                 f"s345d": [e_dir,"rep0", "rep1"],
                 f"s345ds347d":[e_dir, "rep0"],
                 f"s345ds347dalpha":[e_dir, "rep0"],
