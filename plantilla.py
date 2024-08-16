@@ -20,21 +20,21 @@ c_dir = "/vscratch/grp-vmonje/ricardox/c-phos-project/"
 e_dir = "/vscratch/grp-vmonje/ricardox/e-phos-project/"
 
 directories = {
-    #            f"normalmlkl": [d_dir, "rep0", "rep1", "rep2"],
-    #            f"345mlkl": [d_dir, "rep0", "rep1", "rep2"],
-    #            f"347mlkl": [d_dir, "rep0", "rep1", "rep2"],
-    #            f"2pmlkl":[d_dir, "rep0", "rep1", "rep2"],
-    #            f"s345d": [e_dir,"rep0", "rep1"],
-    #            f"s345ds347d":[e_dir, "rep0"],
+                f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
+                f"s345d": [e_dir,"rep0", "rep1"],
+                f"s345ds347d":[e_dir, "rep0"],
                 f"4btfalpha": [e_dir,"rep0"],
-#                f"q343a": [e_dir,"rep0", "rep1"],
-#                f"q343a_s345d": [e_dir,"rep0", "rep1"],
-#                f"2ubpmlkl":[e_dir, "rep1"],
+                f"q343a": [e_dir,"rep0", "rep1"],
+                f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                f"2ubpmlkl":[e_dir, "rep1"],
 }
 
 
 # Set up working directory
-home = "/vscratch/grp-vmonje/ricardox/d-phos-project/mlkl_analysis"
+home = "/vscratch/grp-vmonje/ricardox/e-phos-project/mlkl_analysis"
 os.chdir(home)
 
 
@@ -506,6 +506,7 @@ def check_file(file):
     value = os.path.isfile(file)
     if value:
         print(f"File {file} exists")
+        return value
     else:
         print(f"Files {file} does not exist, make sure it does before rerun this code")
         return value
@@ -513,11 +514,14 @@ def check_file(file):
 def generate_topol(file):
     file_w = open(file, "r")
     words = ["CLA", "POT", "TIP3"]
-    new_topol = open(file.replace("topol.top", "new_topol.top"))
+    print(f"Open to write {file.replace('topol.top', 'new_topol.top')}")
+    new_topol = open(file.replace("topol.top", "new_topol.top"), "w")
     lines = file_w.readlines()
     for line in lines:
         if not any(line.startswith(word) for word in words):
             new_topol.write(line)
+    file_w.close()
+    new_topol.close()
 
 
 
@@ -528,16 +532,17 @@ def generate_tprs(directories):
     for key in list(directories.keys()):
         for rep in directories[key][1:]:
             test = True
-            os.chdir(f"{directories[key][0]}/{key}/{rep}/")
-            print(f"Working on the tpr file for {directories[key][0]}/{key}/{rep}/")
-            test = check_file(f"{directories[key][0]}/{key}/{rep}/topol.top")
+            os.chdir(f"{directories[key][0]}{key}/{rep}/production")
+            print(f"Working on the tpr file for {directories[key][0]}{key}/{rep}/production")
+            test = check_file(f"{directories[key][0]}{key}/{rep}/production/topol.top")
+            print(test)
             if test:
-                generate_topol(f"{directories[key][0]}/{key}/{rep}/topol.top")
+                generate_topol(f"{directories[key][0]}{key}/{rep}/production/topol.top")
             test = check_file(f"{home}/new_prod.mdp")
             test = check_file(f"{home}/data/{key}/{rep}/aligned_protpsk.gro")
-
+            print(test)
             if test:
-                subprocess.run(f"gmx grompp -f {home}/new_prod.mdp -o new_prod.tpr -c {home}/data/{key}/{rep}/aligned_protpsk.gro -r {home}/data/{key}/{rep}/aligned_protpsk.gro -p {directories[key][0]}/{key}/{rep}/new_topol.top")
+                os.system(f"gmx grompp -f {home}/new_prod.mdp -o {home}/data/{key}/{rep}/new_prod.tpr -c {home}/data/{key}/{rep}/aligned_protpsk.gro -r {home}/data/{key}/{rep}/aligned_protpsk.gro -p {directories[key][0]}{key}/{rep}/production/new_topol.top -maxwarn -1")
 
 
 
@@ -586,9 +591,12 @@ dict_dist = {
     "alpha_5_8": ["resid 344-352 and name CA", "resid 383-399 and name CA"],
     "alpha_5_9": ["resid 344-352 and name CA", "resid 408-420 and name CA"],
     "alpha_5_6_7_9": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369) and name CA"],
+    "alpha_5_COM": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369 or resid 344-352) and name CA"],
 }
-#for key in list(dict_dist.keys()):
-#    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = key)
+for key in list(dict_dist.keys()):
+    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = key)
+print("Finish distance")
+
 
 #for file in files:
     #plot_rmsds(directories, file)
@@ -608,21 +616,24 @@ dict_dist = {
 # ----- Set up the directories we are working with ----------
 
 directories = {
-#                f"normalmlkl": [d_dir, "rep0", "rep1", "rep2"],
-#                f"345mlkl": [d_dir, "rep0", "rep1", "rep2"],
-#                f"347mlkl": [d_dir, "rep0", "rep1", "rep2"],
-#                f"2pmlkl":[d_dir, "rep0", "rep1", "rep2"],
-#                f"s345d": [e_dir,"rep1"],
-#                f"s345ds347d":[e_dir, "rep0"],
+                #f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
+                #f"s345d": [e_dir,"rep1"],
+                #f"s345ds347d":[e_dir, "rep0"],
                 f"s345ds347dalpha":[e_dir, "rep0"],
                 f"4btfalpha": [e_dir,"rep0"],
                 f"4btfalpha_2pmlkl": [e_dir,"rep0"],
-#                f"q343a": [e_dir,"rep0", "rep1"],
-#                f"q343a_s345d": [e_dir,"rep0", "rep1"],
-#                f"2ubpmlkl":[e_dir, "rep1"],
+                #f"q343a": [e_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                #f"2ubpmlkl":[e_dir, "rep1"],
 }
 
 
+#print("generation of tprs")
+#generate_tprs(directories)
+#print(" Finish generation of tprs")
 
 #extract_xtc(directories, batch = True)
 extractions(directories, step = 1)
