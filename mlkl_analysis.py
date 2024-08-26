@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from MDAnalysis.analysis import rms
 from MDAnalysis.analysis import align
+from MDAnalysis.analysis.hydrogenbonds import (HydrogenBondAnalysis as HBA)
 from sklearn.decomposition import PCA
 from sklearn.decomposition import FastICA
 from sklearn.preprocessing import StandardScaler
@@ -18,6 +19,7 @@ from deeptime.clustering import KMeans
 class Protein:
     def __init__(self, gro, traj, selection_string, timestep = False, tpr = False):
         if tpr:
+            print(f"Reading {tpr}, {traj}")
             self.u = mda.Universe(tpr, traj)
         else:
             self.u = mda.Universe(gro, traj)
@@ -409,12 +411,12 @@ class Protein:
         df = pd.DataFrame(hbonds.results.hbonds[:,:4].astype(int), columns = ['Frame', 'Donor_ix', 'Hydrogen_ix', 'Acceptor_ix',])
         df["Distances"] = hbonds.results.hbonds[:,4]
         df["Angles"] = hbonds.results.hbonds[:,5]
-        df["Donor_resname"] = u.atoms[df.Donor_ix].resnames
-        df["Acceptor_resname"] = u.atoms[df.Acceptor_ix].resnames
-        df["Donor_resid"] = u.atoms[df.Donor_ix].resids
-        df["Acceptor_resid"] = u.atoms[df.Acceptor_ix].resids
-        df["Donor_name"] = u.atoms[df.Donor_ix].names
-        df["Aceptor_name"] = u.atoms[df.Acceptor_ix].names
+        df["Donor_resname"] = self.u.atoms[df.Donor_ix].resnames
+        df["Acceptor_resname"] = self.u.atoms[df.Acceptor_ix].resnames
+        df["Donor_resid"] = self.u.atoms[df.Donor_ix].resids
+        df["Acceptor_resid"] = self.u.atoms[df.Acceptor_ix].resids
+        df["Donor_name"] = self.u.atoms[df.Donor_ix].names
+        df["Aceptor_name"] = self.u.atoms[df.Acceptor_ix].names
         df.to_csv(f'hbonds_data{sufix}.dat')
 
 
