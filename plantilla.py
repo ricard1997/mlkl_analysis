@@ -20,15 +20,16 @@ c_dir = "/vscratch/grp-vmonje/ricardox/c-phos-project/"
 e_dir = "/vscratch/grp-vmonje/ricardox/e-phos-project/"
 
 directories = {
-                f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
-                f"s345d": [e_dir,"rep0", "rep1"],
-                f"s345ds347d":[e_dir, "rep0"],
+                #f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[e_dir, "rep0"],# "rep1", "rep2"],
+                #f"s345d": [e_dir,"rep0", "rep1"],
+                f"s345ds347dalpha":[e_dir, "rep0"],
+                f"4btfalpha_2pmlkl":[e_dir, "rep0"],
                 f"4btfalpha": [e_dir,"rep0"],
-                f"q343a": [e_dir,"rep0", "rep1"],
-                f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                #f"q343a": [e_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
                 f"2ubpmlkl":[e_dir, "rep1"],
 }
 
@@ -113,7 +114,7 @@ def extractions(directories, step = 10):
             # Extract only proteins
             protein.extract_protein(step = step)
 
-            ref = '/vscratch/grp-vmonje/ricardox/d-phos-project/ref_structure.gro'
+            ref = '/vscratch/grp-vmonje/ricardox/e-phos-project/ref_structure.gro'
             # Align the extractions
             selections = {"psk":"((resid 182-351 or resid 365-460) and name CA)",
                             "found" : "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA",
@@ -547,6 +548,19 @@ def generate_tprs(directories):
 
 
 
+def run_hb_protein_protein(directories):
+
+    for key in list(directories.keys()):
+        for rep in directories[key][1:]:
+            os.chdir(f"{home}/data/{key}/{rep}/")
+
+            tpr_file = f"{home}/data/{key}/new_prod.tpr"
+            print(f"Working on {home}/data/{key}/{rep}")
+            prot = Protein("./aligned_protpsk.gro", "./aligned_protpsk.xtc", "resid 1-469", tpr = tpr_file)            
+            prot.hb_protein_protein()
+
+
+
 #####################################################################################################################################
 
 # Run section
@@ -585,17 +599,17 @@ files = ["rmsd_4hbbrace.dat", "rmsd_found.dat", "rmsd_psk.dat"]
 
 
 # ---- Dictionary to plot distances betwoeen to grups of atoms
-dict_dist = {
-    "alpha_5_6": ["resid 344-352 and name CA", "resid 365-369 and name CA"],
-    "alpha_5_7": ["resid 344-352 and name CA", "resid 370-376 and name CA"],
-    "alpha_5_8": ["resid 344-352 and name CA", "resid 383-399 and name CA"],
-    "alpha_5_9": ["resid 344-352 and name CA", "resid 408-420 and name CA"],
-    "alpha_5_6_7_9": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369) and name CA"],
-    "alpha_5_COM": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369 or resid 344-352) and name CA"],
-}
-for key in list(dict_dist.keys()):
-    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = key)
-print("Finish distance")
+#dict_dist = {
+#    "alpha_5_6": ["resid 344-352 and name CA", "resid 365-369 and name CA"],
+#    "alpha_5_7": ["resid 344-352 and name CA", "resid 370-376 and name CA"],
+#    "alpha_5_8": ["resid 344-352 and name CA", "resid 383-399 and name CA"],
+#    "alpha_5_9": ["resid 344-352 and name CA", "resid 408-420 and name CA"],
+#    "alpha_5_6_7_9": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369) and name CA"],
+#    "alpha_5_COM": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369 or resid 344-352) and name CA"],
+#}
+#for key in list(dict_dist.keys()):
+#    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = key)
+#print("Finish distance")
 
 
 #for file in files:
@@ -620,14 +634,14 @@ directories = {
                 #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
                 #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
                 #f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
-                #f"s345d": [e_dir,"rep1"],
-                #f"s345ds347d":[e_dir, "rep0"],
+                f"s345d": [e_dir,"rep1"],
+                f"s345ds347d":[e_dir, "rep0"],
                 f"s345ds347dalpha":[e_dir, "rep0"],
                 f"4btfalpha": [e_dir,"rep0"],
                 f"4btfalpha_2pmlkl": [e_dir,"rep0"],
-                #f"q343a": [e_dir,"rep0", "rep1"],
-                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
-                #f"2ubpmlkl":[e_dir, "rep1"],
+                f"q343a": [e_dir,"rep0", "rep1"],
+                f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                f"2ubpmlkl":[e_dir, "rep1"],
 }
 
 
@@ -636,10 +650,11 @@ directories = {
 #print(" Finish generation of tprs")
 
 #extract_xtc(directories, batch = True)
-extractions(directories, step = 1)
-check_files(directories)
+#extractions(directories, step = 1)
+#check_files(directories)
 
 
+run_hb_protein_protein(directories)
 
 # ---------------
 
@@ -647,7 +662,7 @@ check_files(directories)
 
 
 
-
+"""
 
 
 
@@ -922,4 +937,4 @@ print(perce)
 #protein.align_prot(selection, ref_file = ref)
 
 
-
+"""
