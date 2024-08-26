@@ -397,8 +397,25 @@ class Protein:
 
 
 
+    def hb_protein_protein(self, sufix = ""):
+        
+        hbonds = HBA(universe=self.u,
+		    between = ['protein', 'protein'],
+		    d_a_cutoff = 3.2, d_h_a_angle_cutoff=150, update_selections=False)
 
+        hbonds.run()
 
+        np.save(f'numpyhb_{sufix}.dat', hbonds.results.hbonds)
+        df = pd.DataFrame(hbonds.results.hbonds[:,:4].astype(int), columns = ['Frame', 'Donor_ix', 'Hydrogen_ix', 'Acceptor_ix',])
+        df["Distances"] = hbonds.results.hbonds[:,4]
+        df["Angles"] = hbonds.results.hbonds[:,5]
+        df["Donor_resname"] = u.atoms[df.Donor_ix].resnames
+        df["Acceptor_resname"] = u.atoms[df.Acceptor_ix].resnames
+        df["Donor_resid"] = u.atoms[df.Donor_ix].resids
+        df["Acceptor_resid"] = u.atoms[df.Acceptor_ix].resids
+        df["Donor_name"] = u.atoms[df.Donor_ix].names
+        df["Aceptor_name"] = u.atoms[df.Acceptor_ix].names
+        df.to_csv(f'hbonds_data{sufix}.dat')
 
 
 
