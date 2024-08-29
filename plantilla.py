@@ -10,7 +10,7 @@ import MDAnalysis.analysis.encore as encore
 import seaborn as sns
 import re
 import subprocess
-
+from scipy.sparse import coo_matrix
 gro = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.gro"
 xtc = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.xtc"
 
@@ -560,6 +560,39 @@ def run_hb_protein_protein(directories):
             prot.hb_protein_protein()
 
 
+def plot_hb_data(directories):
+
+    for key in list(directories.keys()):
+        for rep in directories[key][1:]:
+            os.chdir(f"{home}/data/{key}/{rep}/")
+            filename = "hbonds_data.dat"
+            to_combine = ["Donor_resid", "Acceptor_resid"]
+            df = pd.read_csv(filename)
+            df["Combined"] = df.apply(lambda row: f"{max(row['Donor_resid'], row['Acceptor_resid'])}-{min(row['Donor_resid'], row['Acceptor_resid'])}", axis = 1)
+            counts = df.groupby(["Frame", "Combined"]).size().reset_index(name="Hbs")
+            counts[['Resid1', 'Resid2']] = counts['Combined'].str.split('-', expand=True)
+            counts = counts[["Resid1", "Resid2", "Hbs"]]
+            matrix = counts.pivot_table(index = "Resid1", columns = "Resid2", values = "Hbs", aggfunc = "sum", fill_value = 0)
+            
+            matrix = coo_matrix((counts["Hbs"], (counts["Resid1"].astype(int).to_numpy()-1, counts["Resid2"].astype(int).to_numpy()-1)), shape=(469,469)).A
+
+            symmetric = matrix + matrix.T -np.diag(np.diag(matrix))
+            print(symmetric)
+            
+            print("Matrix", matrix)
+            df = df[["Donor_resid", "Acceptor_resid"]]
+            df["Hbs"] = 1
+            print("test calc:", df)
+            matrix = coo_matrix((df["Hbs"], (df["Donor_resid"].astype(int).to_numpy()-1, df["Acceptor_resid"].astype(int).to_numpy()-1)), shape=(469,469)).A
+            #test_matrix = df.pivot_table(index="Donor_resid", columns = "Acceptor_resid", values = "Hbs", aggfunc = "count", fill_value = 0)
+            print("Test matrix:", matrix)
+            symmetric = matrix + matrix.T -np.diag(np.diag(matrix))
+            print(symmetric)
+
+
+
+
+
 
 #####################################################################################################################################
 
@@ -630,18 +663,18 @@ files = ["rmsd_4hbbrace.dat", "rmsd_found.dat", "rmsd_psk.dat"]
 # ----- Set up the directories we are working with ----------
 
 directories = {
-                #f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"normalmlkl": [e_dir, "rep0"]#, "rep1", "rep2"],
                 #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
                 #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
                 #f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
-                f"s345d": [e_dir,"rep1"],
-                f"s345ds347d":[e_dir, "rep0"],
-                f"s345ds347dalpha":[e_dir, "rep0"],
-                f"4btfalpha": [e_dir,"rep0"],
-                f"4btfalpha_2pmlkl": [e_dir,"rep0"],
-                f"q343a": [e_dir,"rep0", "rep1"],
-                f"q343a_s345d": [e_dir,"rep0", "rep1"],
-                f"2ubpmlkl":[e_dir, "rep1"],
+                #f"s345d": [e_dir,"rep1"],
+                #f"s345ds347d":[e_dir, "rep0"],
+                #f"s345ds347dalpha":[e_dir, "rep0"],
+                #f"4btfalpha": [e_dir,"rep0"],
+                #f"4btfalpha_2pmlkl": [e_dir,"rep0"],
+                #f"q343a": [e_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                #f"2ubpmlkl":[e_dir, "rep1"],
 }
 
 
@@ -654,8 +687,8 @@ directories = {
 #check_files(directories)
 
 
-run_hb_protein_protein(directories)
-
+#run_hb_protein_protein(directories)
+plot_hb_data(directories)
 # ---------------
 
 
