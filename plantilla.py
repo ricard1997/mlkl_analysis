@@ -630,19 +630,36 @@ files = ["rmsd_4hbbrace.dat", "rmsd_found.dat", "rmsd_psk.dat"]
 
 
 
+# ----- Set up the directories we are working with ----------
+
+directories = {
+                f"normalmlkl": [e_dir, "rep0"],# "rep1", "rep2"],
+                f"345mlkl": [e_dir, "rep0"],# "rep1", "rep2"],
+                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[e_dir, "rep0", "rep1"],# "rep2"],
+                #f"s345d": [e_dir,"rep1"],
+                #f"s345ds347d":[e_dir, "rep0"],
+                #f"s345ds347dalpha":[e_dir, "rep0"],
+                #f"4btfalpha": [e_dir,"rep0"],
+                #f"4btfalpha_2pmlkl": [e_dir,"rep0"],
+                #f"q343a": [e_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                #f"2ubpmlkl":[e_dir, "rep1"],
+}
 
 # ---- Dictionary to plot distances betwoeen to grups of atoms
-#dict_dist = {
-#    "alpha_5_6": ["resid 344-352 and name CA", "resid 365-369 and name CA"],
-#    "alpha_5_7": ["resid 344-352 and name CA", "resid 370-376 and name CA"],
-#    "alpha_5_8": ["resid 344-352 and name CA", "resid 383-399 and name CA"],
-#    "alpha_5_9": ["resid 344-352 and name CA", "resid 408-420 and name CA"],
-#    "alpha_5_6_7_9": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369) and name CA"],
-#    "alpha_5_COM": ["resid 344-352 and name CA", "(resid 408-420 or resid 370-376 or resid 365-369 or resid 344-352) and name CA"],
-#}
-#for key in list(dict_dist.keys()):
-#    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = key)
-#print("Finish distance")
+dict_dist = {
+    "alpha_25_6": ["(resid 344-352 or resid 233-248) and name CA", "resid 365-369 and name CA"],
+    "alpha_25_7": ["(resid 344-352 or resid 233-248) and name CA", "resid 370-376 and name CA"],
+    "alpha_25_8": ["(resid 344-352 or resid 233-248) and name CA", "resid 383-399 and name CA"],
+    "alpha_25_9": ["(resid 344-352 or resid 233-248) and name CA", "resid 408-420 and name CA"],
+    "alpha_25_6_7_9": ["(resid 344-352 or resid 233-248) and name CA", "(resid 408-420 or resid 370-376 or resid 365-369) and name CA"],
+    "alpha_25_COM": ["(resid 344-352 or resid 233-248) and name CA", "(resid 408-420 or resid 370-376 or resid 365-369 or resid 344-352 or resid 233-248) and name CA"],
+    "alpha_25_6_7_9": ["(resid 344-352 or resid 233-248) and name CA", "(resid 408-420 or resid 370-376 or resid 365-369) and name CA"],
+}
+for key in list(dict_dist.keys()):
+    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = f"{key}new")
+print("Finish distance")
 
 
 #for file in files:
