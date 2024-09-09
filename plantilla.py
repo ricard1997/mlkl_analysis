@@ -10,6 +10,7 @@ import MDAnalysis.analysis.encore as encore
 import seaborn as sns
 import re
 import subprocess
+import matplotlib.patches as patches
 from scipy.sparse import coo_matrix
 gro = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.gro"
 xtc = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.xtc"
@@ -565,29 +566,60 @@ def plot_hb_data(directories):
     for key in list(directories.keys()):
         for rep in directories[key][1:]:
             os.chdir(f"{home}/data/{key}/{rep}/")
+
             filename = "hbonds_data.dat"
             to_combine = ["Donor_resid", "Acceptor_resid"]
-            df = pd.read_csv(filename)
-            df["Combined"] = df.apply(lambda row: f"{max(row['Donor_resid'], row['Acceptor_resid'])}-{min(row['Donor_resid'], row['Acceptor_resid'])}", axis = 1)
-            counts = df.groupby(["Frame", "Combined"]).size().reset_index(name="Hbs")
-            counts[['Resid1', 'Resid2']] = counts['Combined'].str.split('-', expand=True)
-            counts = counts[["Resid1", "Resid2", "Hbs"]]
-            matrix = counts.pivot_table(index = "Resid1", columns = "Resid2", values = "Hbs", aggfunc = "sum", fill_value = 0)
+            try:
+                df = pd.read_csv(filename)
+                df = df[df["Donor_name"]!= "C"]
+                df = df[df["Donor_name"]!= "N"]
+                df = df[df["Aceptor_name"]!= "C"]
+                df = df[df["Aceptor_name"]!= "C"]
+            except:
+                break
+            frames = df["Frame"].nunique()
+            #df["Combined"] = df.apply(lambda row: f"{max(row['Donor_resid'], row['Acceptor_resid'])}-{min(row['Donor_resid'], row['Acceptor_resid'])}", axis = 1)
+            #counts = df.groupby(["Frame", "Combined"]).size().reset_index(name="Hbs")
+            #counts[['Resid1', 'Resid2']] = counts['Combined'].str.split('-', expand=True)
+            #counts = counts[["Resid1", "Resid2", "Hbs"]]
+            #matrix = counts.pivot_table(index = "Resid1", columns = "Resid2", values = "Hbs", aggfunc = "sum", fill_value = 0)
             
-            matrix = coo_matrix((counts["Hbs"], (counts["Resid1"].astype(int).to_numpy()-1, counts["Resid2"].astype(int).to_numpy()-1)), shape=(469,469)).A
+            #matrix = coo_matrix((counts["Hbs"], (counts["Resid1"].astype(int).to_numpy()-1, counts["Resid2"].astype(int).to_numpy()-1)), shape=(469,469)).A
 
-            symmetric = matrix + matrix.T -np.diag(np.diag(matrix))
-            print(symmetric)
+            #symmetric1 = matrix + matrix.T -np.diag(np.diag(matrix))
+            #print("First symmetric matrix:", symmetric1)
             
-            print("Matrix", matrix)
+            #print("Matrix original", matrix)
             df = df[["Donor_resid", "Acceptor_resid"]]
+            #print(df.columns)
             df["Hbs"] = 1
-            print("test calc:", df)
+            #print("test calc:", df)
+            df = df[df["Donor_resid"] <=469]
+            df = df[df["Acceptor_resid"] <=469]
             matrix = coo_matrix((df["Hbs"], (df["Donor_resid"].astype(int).to_numpy()-1, df["Acceptor_resid"].astype(int).to_numpy()-1)), shape=(469,469)).A
             #test_matrix = df.pivot_table(index="Donor_resid", columns = "Acceptor_resid", values = "Hbs", aggfunc = "count", fill_value = 0)
-            print("Test matrix:", matrix)
             symmetric = matrix + matrix.T -np.diag(np.diag(matrix))
-            print(symmetric)
+            #print("Second symmetric matrix:" ,symmetric)
+            #print("Matrix original 2:", matrix)
+            plt.close()
+            np.savetxt("hb_matrix.txt",symmetric, fmt = "%d")
+            symmetric = np.array(symmetric, dtype=float)
+            symmetric[symmetric == 0] = np.nan
+            symmetric = symmetric/frames
+            print(f"HB:{key}-{rep}", symmetric[223, 347])
+            np.savetxt("hb_matrixperframe.txt",symmetric)
+
+            plt.matshow(symmetric)
+            plt.colorbar()
+            plt.scatter(223, 347, facecolors= "none",s = 10, edgecolors="black", alpha = 0.5)
+            plt.scatter(141, 180, facecolors= "none",s = 10, edgecolors="black", alpha = 0.5)
+            #c = plt.Circle((343,224), radius = 5, color = "white", alpha = 0.1)
+            #plt.gca().add_artist(c)
+            plt.savefig(f"{home}/matrix_{key}_{rep}.png", dpi = 500)
+            #bools = symmetric == symmetric1
+            #print("Check bool:", symmetric == symmetric1)
+            #print(np.sum(bools), bools.size)
+
 
 
 
@@ -657,9 +689,9 @@ dict_dist = {
     "alpha_25_COM": ["(resid 344-352 or resid 233-248) and name CA", "(resid 408-420 or resid 370-376 or resid 365-369 or resid 344-352 or resid 233-248) and name CA"],
     "alpha_25_6_7_9": ["(resid 344-352 or resid 233-248) and name CA", "(resid 408-420 or resid 370-376 or resid 365-369) and name CA"],
 }
-for key in list(dict_dist.keys()):
-    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = f"{key}new")
-print("Finish distance")
+#for key in list(dict_dist.keys()):
+#    plot_dist_two(directories, dict_dist[key][0], dict_dist[key][1], sufix = f"{key}new")
+#print("Finish distance")
 
 
 #for file in files:
@@ -680,18 +712,18 @@ print("Finish distance")
 # ----- Set up the directories we are working with ----------
 
 directories = {
-                f"normalmlkl": [e_dir, "rep0"]#, "rep1", "rep2"],
-                #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                #f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
-                #f"s345d": [e_dir,"rep1"],
-                #f"s345ds347d":[e_dir, "rep0"],
-                #f"s345ds347dalpha":[e_dir, "rep0"],
-                #f"4btfalpha": [e_dir,"rep0"],
-                #f"4btfalpha_2pmlkl": [e_dir,"rep0"],
-                #f"q343a": [e_dir,"rep0", "rep1"],
-                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
-                #f"2ubpmlkl":[e_dir, "rep1"],
+                f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
+                f"s345d": [e_dir,"rep1"],
+                f"s345ds347d":[e_dir, "rep0"],
+                f"s345ds347dalpha":[e_dir, "rep0"],
+                f"4btfalpha": [e_dir,"rep0"],
+                f"4btfalpha_2pmlkl": [e_dir,"rep0"],
+                f"q343a": [e_dir,"rep0", "rep1"],
+                f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                f"2ubpmlkl":[e_dir, "rep1"],
 }
 
 
