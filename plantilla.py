@@ -455,9 +455,10 @@ def recorrer_string(string):
     
 
     
-def applycluster(directories, selection, projector, classifier, selection2= None, original_data = None):
+def applycluster(directories, selection, projector, classifier, selection2= None, original_data = None, pcca_map = False):
 
     dict_results = {}
+    dict_cluster_list = {}
     for key in list(directories.keys()):
         for rep in directories[key][1:]:
             os.chdir(f"{home}/data/{key}/{rep}/")
@@ -500,8 +501,15 @@ def applycluster(directories, selection, projector, classifier, selection2= None
                 dict_clusters[f"{value}"] = percentage
 
             dict_results[f"{key}_{rep}"] = dict_clusters
+            dict_cluster_list[f"{key}_{rep}"] = clusterization
 
-    return dict_results
+            if pcca_map:
+                projections_pcca = [pcca_map[val] for val in clusterization]
+                prot.write_cluster_trajs(projections_pcca)
+
+
+
+    return dict_results, dict_cluster_list
 
 
 def check_file(file):
@@ -737,14 +745,14 @@ directories = {
 
 
 #run_hb_protein_protein(directories)
-plot_hb_data(directories)
+#plot_hb_data(directories)
 # ---------------
 
 
 
 
 
-"""
+
 
 
 
@@ -979,7 +987,12 @@ directories = {
 #selection_string = "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA"
 
 plt.close()
-perce = applycluster(directories, selection_string, pca, classifier, original_data = data_fitted)
+perce, cluster_list = applycluster(directories, selection_string, pca, classifier, original_data = data_fitted, pcca_map = max_indices)
+print("Perce:",cluster_list)
+
+#for key in cluster_list:
+#    print(cluster_list[key])
+#    print([max_indices[i] for i in cluster_list[key]])
 perce = pd.DataFrame(perce)
 perce = perce.transpose()
 
@@ -1019,4 +1032,3 @@ print(perce)
 #protein.align_prot(selection, ref_file = ref)
 
 
-"""
