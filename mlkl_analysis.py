@@ -107,6 +107,26 @@ class Protein:
 
         
 
+    def write_cluster_trajs(self, cluster_list):
+        if len(cluster_list) != len(self.u.trajectory):
+            print("Warning: The cluster list and the trajectory have different length")
+
+        cluster = set(cluster_list)
+        cluster_dict = {}
+        for value in cluster:
+            cluster_dict[value] = [i for i, n in enumerate(cluster_list) if n == value]
+
+            with mda.Writer(f"clustered_traj_{value}.xtc") as W:
+                count = 0
+                for ts in self.u.trajectory[cluster_dict[value]]:
+                    W.write(self.protein)
+                    print(ts.frame)
+                    if count == 0:
+                        self.protein.write(f"clustered_traj_{value}.gro")
+                    count += 1
+            
+
+        
         
 
 
