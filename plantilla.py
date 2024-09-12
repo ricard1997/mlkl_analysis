@@ -633,6 +633,23 @@ def plot_hb_data(directories, sufix = ""):
 
 
 
+def hb_network_visualization(adj_mat, pos_file = None, sufix = ""):
+    G = nx.from_numpy_array(adj_mat)
+    if pos_file:
+        pos = mda.Universe(pos_file)
+        residues = pos.select_atoms("resid 1-469")
+        residues = residues.center_of_geometry(compound = "residues")
+        res_pos = {i:residues[i][1:] for i in range(469)}
+        positions = nx.spring_layout(G, pos = res_pos, fixed = res_pos.keys(), seed = 42)
+        nx.draw(G, pos = positions, with_labels = True)
+        plt.savefig(f"graph{sufix}.png")
+
+def dir_hb_visualization(directories, filename):
+    for key in list(directories.keys()):
+        for rep in directories[key][1:]:
+            os.chdir(f"{home}/data/{key}/{rep}/")
+
+
 
 
 
@@ -722,17 +739,17 @@ dict_dist = {
 # ----- Set up the directories we are working with ----------
 
 directories = {
-                f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
                 f"2pmlkl":[e_dir, "rep0", "rep1"],# "rep2"],
-                f"s345d": [e_dir,"rep1"],
-                f"s345ds347d":[e_dir, "rep0"],
-                f"s345ds347dalpha":[e_dir, "rep0"],
-                f"4btfalpha": [e_dir,"rep0"],
-                f"4btfalpha_2pmlkl": [e_dir,"rep0"],
-                f"q343a": [e_dir,"rep0", "rep1"],
-                f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                #f"s345d": [e_dir,"rep1"],
+                #f"s345ds347d":[e_dir, "rep0"],
+                #f"s345ds347dalpha":[e_dir, "rep0"],
+                #f"4btfalpha": [e_dir,"rep0"],
+                #f"4btfalpha_2pmlkl": [e_dir,"rep0"],
+                #f"q343a": [e_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
                 #f"2ubpmlkl":[e_dir, "rep1"],
 }
 
