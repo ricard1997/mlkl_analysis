@@ -557,25 +557,28 @@ def generate_tprs(directories):
 
 
 
-def run_hb_protein_protein(directories):
+def run_hb_protein_protein(directories, filename = "aligned_protpsk", sufix = ""):
 
+        
     for key in list(directories.keys()):
         for rep in directories[key][1:]:
             os.chdir(f"{home}/data/{key}/{rep}/")
-
             tpr_file = f"{home}/data/{key}/new_prod.tpr"
-            print(f"Working on {home}/data/{key}/{rep}")
-            prot = Protein("./aligned_protpsk.gro", "./aligned_protpsk.xtc", "resid 1-469", tpr = tpr_file)            
-            prot.hb_protein_protein()
+            print(f"Working on {home}/data/{key}/{rep} on the file {filename}")
+            try:
+                prot = Protein(f"./{filename}.gro", f"./{filename}.xtc", "resid 1-469", tpr = tpr_file)
+                prot.hb_protein_protein(sufix = sufix)
+            except:
+                print(f"Warning: {filename}.xtc/gro may not be present")
 
 
-def plot_hb_data(directories):
+def plot_hb_data(directories, sufix = ""):
 
     for key in list(directories.keys()):
         for rep in directories[key][1:]:
             os.chdir(f"{home}/data/{key}/{rep}/")
 
-            filename = "hbonds_data.dat"
+            filename = f"hbonds_data{sufix}.dat"
             to_combine = ["Donor_resid", "Acceptor_resid"]
             try:
                 df = pd.read_csv(filename)
@@ -610,7 +613,7 @@ def plot_hb_data(directories):
             #print("Second symmetric matrix:" ,symmetric)
             #print("Matrix original 2:", matrix)
             plt.close()
-            np.savetxt("hb_matrix.txt",symmetric, fmt = "%d")
+            np.savetxt("hb_matrix{sufix}.txt",symmetric, fmt = "%d")
             symmetric = np.array(symmetric, dtype=float)
             symmetric[symmetric == 0] = np.nan
             symmetric = symmetric/frames
@@ -623,11 +626,10 @@ def plot_hb_data(directories):
             plt.scatter(141, 180, facecolors= "none",s = 10, edgecolors="black", alpha = 0.5)
             #c = plt.Circle((343,224), radius = 5, color = "white", alpha = 0.1)
             #plt.gca().add_artist(c)
-            plt.savefig(f"{home}/matrix_{key}_{rep}.png", dpi = 500)
+            plt.savefig(f"{home}/matrix_{key}_{rep}_{sufix}.png", dpi = 500)
             #bools = symmetric == symmetric1
             #print("Check bool:", symmetric == symmetric1)
             #print(np.sum(bools), bools.size)
-
 
 
 
@@ -723,7 +725,7 @@ directories = {
                 f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
                 f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
                 f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[e_dir, "rep0", "rep1"],# "rep2"],
                 f"s345d": [e_dir,"rep1"],
                 f"s345ds347d":[e_dir, "rep0"],
                 f"s345ds347dalpha":[e_dir, "rep0"],
@@ -731,7 +733,7 @@ directories = {
                 f"4btfalpha_2pmlkl": [e_dir,"rep0"],
                 f"q343a": [e_dir,"rep0", "rep1"],
                 f"q343a_s345d": [e_dir,"rep0", "rep1"],
-                f"2ubpmlkl":[e_dir, "rep1"],
+                #f"2ubpmlkl":[e_dir, "rep1"],
 }
 
 
@@ -744,7 +746,12 @@ directories = {
 #check_files(directories)
 
 
-#run_hb_protein_protein(directories)
+#run_hb_protein_protein(directories) # Run hbonds for aligned_prot. files
+for i in range(0,1): # Run hbobds for the clusters
+    run_hb_protein_protein(directories, filename = f"clustered_traj_{i}", sufix = f"_clust{i}") # Output a file called hbonds_data_clust{i}.dat
+    plot_hb_data(directories, sufix = f"_clust{i}")
+
+
 #plot_hb_data(directories)
 # ---------------
 
@@ -965,17 +972,17 @@ plt.close()
 
 # ---------- Directories to be included in the barplot of th emetastable states ------------
 directories = {
-                f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
-                f"s345d": [e_dir,"rep0", "rep1"],
-                f"s345ds347d":[e_dir, "rep0"],
-                f"s345ds347dalpha":[e_dir, "rep0"],
-                f"4btfalpha": [e_dir,"rep0"],
-                f"4btfalpha_2pmlkl": [e_dir,"rep0"],
-                f"q343a": [e_dir,"rep0", "rep1"],
-                f"q343a_s345d": [e_dir,"rep0", "rep1"],
+                #f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
+                #f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
+                #f"s345d": [e_dir,"rep0", "rep1"],
+                #f"s345ds347d":[e_dir, "rep0"],
+                #f"s345ds347dalpha":[e_dir, "rep0"],
+                #f"4btfalpha": [e_dir,"rep0"],
+                #f"4btfalpha_2pmlkl": [e_dir,"rep0"],
+                #f"q343a": [e_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
                 f"2ubpmlkl":[e_dir, "rep1"],
 }
 
