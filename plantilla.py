@@ -11,6 +11,7 @@ import seaborn as sns
 import re
 import subprocess
 import matplotlib.patches as patches
+import networkx as nx
 from scipy.sparse import coo_matrix
 gro = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.gro"
 xtc = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/centered_prot.xtc"
@@ -613,12 +614,12 @@ def plot_hb_data(directories, sufix = ""):
             #print("Second symmetric matrix:" ,symmetric)
             #print("Matrix original 2:", matrix)
             plt.close()
-            np.savetxt("hb_matrix{sufix}.txt",symmetric, fmt = "%d")
+            np.savetxt(f"hb_matrix{sufix}.txt",symmetric, fmt = "%d")
             symmetric = np.array(symmetric, dtype=float)
             symmetric[symmetric == 0] = np.nan
             symmetric = symmetric/frames
             print(f"HB:{key}-{rep}", symmetric[223, 347])
-            np.savetxt("hb_matrixperframe.txt",symmetric)
+            np.savetxt(f"hb_matrixperframe{sufix}.txt",symmetric)
 
             plt.matshow(symmetric)
             plt.colorbar()
@@ -644,11 +645,15 @@ def hb_network_visualization(adj_mat, pos_file = None, sufix = ""):
         nx.draw(G, pos = positions, with_labels = True)
         plt.savefig(f"graph{sufix}.png")
 
-def dir_hb_visualization(directories, filename):
+def dir_hb_visualization(directories, filenames):
+    filenames = ["0", "1", "2"]
     for key in list(directories.keys()):
         for rep in directories[key][1:]:
             os.chdir(f"{home}/data/{key}/{rep}/")
-
+            for filename in filenames:
+                adj_mat = np.loadtxt(f"hb_matrixperframe_clust0.txt")
+                print(adj_mat, os.getcwd())
+                hb_network_visualization(adj_mat, pos_file = f"./clustered_traj_{filename}.gro", sufix = f"_{filename}")
 
 
 
@@ -764,10 +769,11 @@ directories = {
 
 
 #run_hb_protein_protein(directories) # Run hbonds for aligned_prot. files
-for i in range(0,1): # Run hbobds for the clusters
-    run_hb_protein_protein(directories, filename = f"clustered_traj_{i}", sufix = f"_clust{i}") # Output a file called hbonds_data_clust{i}.dat
-    plot_hb_data(directories, sufix = f"_clust{i}")
-
+#for i in range(0,3): # Run hbobds for the clusters
+#    run_hb_protein_protein(directories, filename = f"clustered_traj_{i}", sufix = f"_clust{i}") # Output a file called hbonds_data_clust{i}.dat
+#    plot_hb_data(directories, sufix = f"_clust{i}")
+filenames = ["0", "1", "2"]
+dir_hb_visualization(directories, filenames)
 
 #plot_hb_data(directories)
 # ---------------
