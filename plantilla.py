@@ -640,7 +640,7 @@ def hb_network_visualization(adj_mat, pos_file = None, sufix = ""):
         pos = mda.Universe(pos_file)
         residues = pos.select_atoms("resid 1-469")
         residues = residues.center_of_geometry(compound = "residues")
-        res_pos = {i:residues[i][1:] for i in range(469)}
+        res_pos = {i:10*residues[i][:2] for i in range(469)}
         positions = nx.spring_layout(G, pos = res_pos, fixed = res_pos.keys(), seed = 42)
         nx.draw(G, pos = positions, with_labels = True)
         plt.savefig(f"graph{sufix}.png")
@@ -651,7 +651,8 @@ def dir_hb_visualization(directories, filenames):
         for rep in directories[key][1:]:
             os.chdir(f"{home}/data/{key}/{rep}/")
             for filename in filenames:
-                adj_mat = np.loadtxt(f"hb_matrixperframe_clust0.txt")
+                adj_mat = np.loadtxt(f"hb_matrixperframe_clust{filename}.txt")
+                adj_mat[np.isnan(adj_mat)] = 0
                 print(adj_mat, os.getcwd())
                 hb_network_visualization(adj_mat, pos_file = f"./clustered_traj_{filename}.gro", sufix = f"_{filename}")
 
@@ -747,7 +748,7 @@ directories = {
                 #f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
                 #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
                 #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[e_dir, "rep0", "rep1"],# "rep2"],
+                f"2pmlkl":[e_dir, "rep0"],# "rep1"],# "rep2"],
                 #f"s345d": [e_dir,"rep1"],
                 #f"s345ds347d":[e_dir, "rep0"],
                 #f"s345ds347dalpha":[e_dir, "rep0"],
