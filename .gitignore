@@ -1,7 +1,9 @@
 *.xtc
 *.gro
+*.txt
 *.png
 *.dat
+.ipynb_checkpoints
 data
 extract_protein.py
 new_pca.py
