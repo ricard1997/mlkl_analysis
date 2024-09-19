@@ -640,6 +640,7 @@ def hb_network_visualization(adj_mat, pos_file = None, sufix = ""):
         pos = mda.Universe(pos_file)
         residues = pos.select_atoms("resid 1-469")
         residues = residues.center_of_geometry(compound = "residues")
+        print(f"Max pos: {np.max(residues)}, Min pos: {np.min(residues)}")
         res_pos = {i:10*residues[i][:2] for i in range(469)}
         positions = nx.spring_layout(G, pos = res_pos, fixed = res_pos.keys(), seed = 42)
         nx.draw(G, pos = positions, with_labels = True)
