@@ -20,24 +20,25 @@ xtc = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/cent
 d_dir = "/vscratch/grp-vmonje/ricardox/d-phos-project/"
 c_dir = "/vscratch/grp-vmonje/ricardox/c-phos-project/"
 e_dir = "/vscratch/grp-vmonje/ricardox/e-phos-project/"
+f_dir = "/vscratch/grp-vmonje/ricardox/f-phos-project/"
 
 directories = {
-                #f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
-                #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[e_dir, "rep0"],# "rep1", "rep2"],
-                #f"s345d": [e_dir,"rep0", "rep1"],
-                f"s345ds347dalpha":[e_dir, "rep0"],
-                f"4btfalpha_2pmlkl":[e_dir, "rep0"],
-                f"4btfalpha": [e_dir,"rep0"],
-                #f"q343a": [e_dir,"rep0", "rep1"],
-                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
-                f"2ubpmlkl":[e_dir, "rep1"],
+                #f"normalmlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[f_dir, "rep0"],# "rep1", "rep2"],
+                #f"s345d": [f_dir,"rep0", "rep1"],
+                f"s345ds347dalpha":[f_dir, "rep0"],
+                f"4btfalpha_2pmlkl":[f_dir, "rep0"],
+                f"4btfalpha": [f_dir,"rep0"],
+                #f"q343a": [f_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [f_dir,"rep0", "rep1"],
+                f"2ubpmlkl":[f_dir, "rep1"],
 }
 
 
 # Set up working directory
-home = "/vscratch/grp-vmonje/ricardox/e-phos-project/mlkl_analysis"
+home = "/vscratch/grp-vmonje/ricardox/f-phos-project/mlkl_analysis"
 os.chdir(home)
 
 
@@ -116,7 +117,7 @@ def extractions(directories, step = 10):
             # Extract only proteins
             protein.extract_protein(step = step)
 
-            ref = '/vscratch/grp-vmonje/ricardox/e-phos-project/ref_structure.gro'
+            ref = '/vscratch/grp-vmonje/ricardox/f-phos-project/ref_structure.gro'
             # Align the extractions
             selections = {"psk":"((resid 182-351 or resid 365-460) and name CA)",
                             "found" : "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA",
@@ -614,11 +615,13 @@ def plot_hb_data(directories, sufix = ""):
             #print("Second symmetric matrix:" ,symmetric)
             #print("Matrix original 2:", matrix)
             plt.close()
+            print(f"{home}/data/{key}/{rep}/")
+            print(f"printing hb_matrix{sufix}.txt")
             np.savetxt(f"hb_matrix{sufix}.txt",symmetric, fmt = "%d")
             symmetric = np.array(symmetric, dtype=float)
             symmetric[symmetric == 0] = np.nan
             symmetric = symmetric/frames
-            print(f"HB:{key}-{rep}", symmetric[223, 347])
+            print(f"HB:{key}-{rep} hb 223-347", symmetric[223, 347])
             np.savetxt(f"hb_matrixperframe{sufix}.txt",symmetric)
 
             plt.matshow(symmetric)
@@ -699,18 +702,18 @@ files = ["rmsd_4hbbrace.dat", "rmsd_found.dat", "rmsd_psk.dat"]
 # ----- Set up the directories we are working with ----------
 
 directories = {
-                f"normalmlkl": [e_dir, "rep0"],# "rep1", "rep2"],
-                f"345mlkl": [e_dir, "rep0"],# "rep1", "rep2"],
-                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[e_dir, "rep0", "rep1"],# "rep2"],
-                #f"s345d": [e_dir,"rep1"],
-                #f"s345ds347d":[e_dir, "rep0"],
-                #f"s345ds347dalpha":[e_dir, "rep0"],
-                #f"4btfalpha": [e_dir,"rep0"],
-                #f"4btfalpha_2pmlkl": [e_dir,"rep0"],
-                #f"q343a": [e_dir,"rep0", "rep1"],
-                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
-                #f"2ubpmlkl":[e_dir, "rep1"],
+                f"normalmlkl": [f_dir, "rep0"],# "rep1", "rep2"],
+                f"345mlkl": [f_dir, "rep0"],# "rep1", "rep2"],
+                #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[f_dir, "rep0", "rep1"],# "rep2"],
+                #f"s345d": [f_dir,"rep1"],
+                #f"s345ds347d":[f_dir, "rep0"],
+                #f"s345ds347dalpha":[f_dir, "rep0"],
+                #f"4btfalpha": [f_dir,"rep0"],
+                #f"4btfalpha_2pmlkl": [f_dir,"rep0"],
+                #f"q343a": [f_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [f_dir,"rep0", "rep1"],
+                #f"2ubpmlkl":[f_dir, "rep1"],
 }
 
 # ---- Dictionary to plot distances betwoeen to grups of atoms
@@ -746,18 +749,18 @@ dict_dist = {
 # ----- Set up the directories we are working with ----------
 
 directories = {
-                #f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
-                #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[e_dir, "rep0"],# "rep1"],# "rep2"],
-                #f"s345d": [e_dir,"rep1"],
-                #f"s345ds347d":[e_dir, "rep0"],
-                #f"s345ds347dalpha":[e_dir, "rep0"],
-                #f"4btfalpha": [e_dir,"rep0"],
-                #f"4btfalpha_2pmlkl": [e_dir,"rep0"],
-                #f"q343a": [e_dir,"rep0", "rep1"],
-                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
-                #f"2ubpmlkl":[e_dir, "rep1"],
+                f"normalmlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[f_dir, "rep0"],# "rep1"],# "rep2"],
+                #f"s345d": [f_dir,"rep1"],
+                #f"s345ds347d":[f_dir, "rep0"],
+                #f"s345ds347dalpha":[f_dir, "rep0"],
+                #f"4btfalpha": [f_dir,"rep0"],
+                #f"4btfalpha_2pmlkl": [f_dir,"rep0"],
+                #f"q343a": [f_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [f_dir,"rep0", "rep1"],
+                #f"2ubpmlkl":[f_dir, "rep1"],
 }
 
 
@@ -771,10 +774,11 @@ directories = {
 
 
 #run_hb_protein_protein(directories) # Run hbonds for aligned_prot. files
-#for i in range(0,3): # Run hbobds for the clusters
-#    run_hb_protein_protein(directories, filename = f"clustered_traj_{i}", sufix = f"_clust{i}") # Output a file called hbonds_data_clust{i}.dat
-#    plot_hb_data(directories, sufix = f"_clust{i}")
+for i in range(0,3): # Run hbobds for the clusters
+    #run_hb_protein_protein(directories, filename = f"clustered_traj_{i}", sufix = f"_clust{i}") # Output a file called hbonds_data_clust{i}.dat
+    plot_hb_data(directories, sufix = f"_clust{i}")
 filenames = ["0", "1", "2"]
+#plot_hb_data(directories, sufix =f"")
 dir_hb_visualization(directories, filenames)
 
 #plot_hb_data(directories)
@@ -796,13 +800,13 @@ directories = {
 #                f"normalmlkl": [d_dir, "rep0"],
 #                f"345mlkl": [d_dir, "rep0"],
 #                #f"347mlkl": [d_dir, "rep0"],
-                f"2pmlkl":[e_dir, "rep0"]#, "rep1"],
-#                f"s345d": [e_dir,"rep1"],
+                f"2pmlkl":[f_dir, "rep0"]#, "rep1"],
+#                f"s345d": [f_dir,"rep1"],
 #                #f"q343a": [c_dir,"rep0", "rep1"],
 #                f"q343a_s345d": [c_dir,"rep0"],
 #                f"2ubpmlkl":[c_dir, "rep1"],
-#                f"s345danton":[e_dir, "rep0", "rep2", "repnew"],
-#                f"s345ds347d":[e_dir, "rep0"],
+#                f"s345danton":[f_dir, "rep0", "rep2", "repnew"],
+#                f"s345ds347d":[f_dir, "rep0"],
 }
 
 
@@ -997,18 +1001,18 @@ plt.close()
 
 # ---------- Directories to be included in the barplot of th emetastable states ------------
 directories = {
-                #f"normalmlkl": [e_dir, "rep0", "rep1", "rep2"],
-                #f"345mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                #f"347mlkl": [e_dir, "rep0", "rep1", "rep2"],
-                #f"2pmlkl":[e_dir, "rep0", "rep1", "rep2"],
-                #f"s345d": [e_dir,"rep0", "rep1"],
-                #f"s345ds347d":[e_dir, "rep0"],
-                #f"s345ds347dalpha":[e_dir, "rep0"],
-                #f"4btfalpha": [e_dir,"rep0"],
-                #f"4btfalpha_2pmlkl": [e_dir,"rep0"],
-                #f"q343a": [e_dir,"rep0", "rep1"],
-                #f"q343a_s345d": [e_dir,"rep0", "rep1"],
-                f"2ubpmlkl":[e_dir, "rep1"],
+                #f"normalmlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"2pmlkl":[f_dir, "rep0", "rep1", "rep2"],
+                #f"s345d": [f_dir,"rep0", "rep1"],
+                #f"s345ds347d":[f_dir, "rep0"],
+                #f"s345ds347dalpha":[f_dir, "rep0"],
+                #f"4btfalpha": [f_dir,"rep0"],
+                #f"4btfalpha_2pmlkl": [f_dir,"rep0"],
+                #f"q343a": [f_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [f_dir,"rep0", "rep1"],
+                f"2ubpmlkl":[f_dir, "rep1"],
 }
 
 
