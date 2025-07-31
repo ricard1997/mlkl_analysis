@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/vscratch/grp-vmonje/ricardox/j-phos-project/mlkl_analysis/plantilla.py", line 2, in <module>
+    from mlkl_analysis import Protein
+  File "/vscratch/grp-vmonje/ricardox/j-phos-project/mlkl_analysis/mlkl_analysis.py", line 249
+    from scipy.spatial.distance.cdist
+                                     ^
+SyntaxError: invalid syntax

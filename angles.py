@@ -20,21 +20,20 @@ xtc = "vscratch/grp-vmonje/ricardox/c-phos-project/2ubpmlkl/rep1/production/cent
 d_dir = "/vscratch/grp-vmonje/ricardox/d-phos-project/"
 c_dir = "/vscratch/grp-vmonje/ricardox/c-phos-project/"
 e_dir = "/vscratch/grp-vmonje/ricardox/e-phos-project/"
-f_dir = "/vscratch/grp-vmonje/ricardox/k-phos-project/"
+f_dir = "/vscratch/grp-vmonje/ricardox/j-phos-project/"
 
 directories = {
-                f"normalmlkl": [f_dir, "rep0", "rep1", "rep2"],
-                f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[f_dir, "rep0", "rep1", "rep2"],
-                f"s345d": [f_dir,"rep0", "rep1"],
+                #f"normalmlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
+                f"2pmlkl":[f_dir, "rep0"],# "rep1", "rep2"],
+                #f"s345d": [f_dir,"rep0", "rep1"],
                 f"s345ds347dalpha":[f_dir, "rep0"],
                 f"4btfalpha_2pmlkl":[f_dir, "rep0"],
                 f"4btfalpha": [f_dir,"rep0"],
-                f"q343a": [f_dir,"rep0", "rep1"],
-                f"q343a_s345d": [f_dir,"rep0", "rep1"],
+                #f"q343a": [f_dir,"rep0", "rep1"],
+                #f"q343a_s345d": [f_dir,"rep0", "rep1"],
                 f"2ubpmlkl":[f_dir, "rep1"],
-                f"concatenated":[f_dir, "2pmlkl"],
 }
 
 
@@ -105,7 +104,6 @@ def extractions(directories, step = 10):
     os.makedirs("data", exist_ok = True)
     for key in list(directories.keys()):
         os.chdir(f"{home}/data")
-        print("We will build dir {key} if needed")
         os.makedirs(f"{key}", exist_ok =True)
         for rep in directories[key][1:]:
             os.chdir(f"{home}/data/{key}")
@@ -119,20 +117,19 @@ def extractions(directories, step = 10):
             # Extract only proteins
             protein.extract_protein(step = step)
 
-            ref = '/vscratch/grp-vmonje/ricardox/k-phos-project/ref_structure.gro'
+            ref = '/vscratch/grp-vmonje/ricardox/f-phos-project/ref_structure.gro'
             # Align the extractions
-            selections = {"psk":    "((resid 187 to 232 or resid 249 to 343 or resid 363 to 455) and name CA)", #"((resid 182-351 or resid 365-460) and name CA)",
+            selections = {"psk":"((resid 182-351 or resid 365-460) and name CA)",
                             "found" : "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA",
                             "4hbbrace": "((resid 7-83 or resid 100-122 or resid 134-175) and name CA)"
                             }
-            selections2 = {"psk":"(resid 182 to 227 or resid 244 to 338 or resid 358 to 450) and name CA", #"((resid 177-347 or resid 360-455) and name CA)",
+            selections2 = {"psk":"((resid 177-347 or resid 360-455) and name CA)",
                             "found" : "(resid 2-78 or resid 95-117 or resid 129-170 or resid 177-455) and name CA",
                             "4hbbrace": "((resid 2-78 or resid 95-117 or resid 129-170) and name CA)"
                             }
             new_gro = "only_protein.gro"
             new_xtc = "only_protein.xtc"
             protein_o = Protein(new_gro, new_xtc, "protein", timestep = 0.1)
-            print(protein_o.u.residues)
             for part in list(selections.keys()):
                 
                 if "alpha" in key:
@@ -200,16 +197,12 @@ def plot_rmsds(directories, filename):
 
     fig = plt.figure(figsize =(20,30), dpi = 500)
     layout = []
-
     for key in list(directories.keys()):
-        list_names = []
-        for rep in directories[key][1:]:
-            list_names.append(f"{key}_{rep}")
-        layout.append(list_names)
+        layout.append([f"{key}_rep0", f"{key}_rep1", f"{key}_rep2"])
     
     ax_dict = fig.subplot_mosaic(layout, sharey=True,
                                 gridspec_kw={"hspace":0.5,"wspace":0.15})
-    print(layout) 
+    
     for key in list(directories.keys()):
         for rep in directories[key][1:]:
             data = pd.read_csv(f"{home}/data/{key}/{rep}/{filename}")
@@ -219,7 +212,7 @@ def plot_rmsds(directories, filename):
                 ax_dict[f"{key}_{rep}"].set_title(f"{key}_{rep}") 
                 ax_dict[f"{key}_{rep}"].legend() 
     #plt.tight_layout()
-    plt.savefig(f"plot_{filename.replace('.dat', '.pdf')}")
+    plt.savefig(f"plot_{filename.replace('.dat', '.png')}")
     plt.close()
 
 
@@ -272,7 +265,7 @@ def plot_rmsfs(directories, filename):
         ax_dict[f"{key}"].axvspan(126, 128, color = "red", alpha = 0.2)
         ax_dict[f"{key}"].axvspan(343, 350, color = "black", alpha = 0.2)
     #plt.tight_layout()
-    plt.savefig(f"plot_{filename.replace('.dat', '.pdf')}")
+    plt.savefig(f"plot_{filename.replace('.dat', '.png')}")
     plt.close()
            
 
@@ -288,13 +281,13 @@ def plot_all_rmsfs(directories, filename):
                 (163,175, "red"),
                 (192,196, "black"),
                 (200,228, "yellow"),
-                (233,248, "green"),
+                (233,248, "black"),
                 (259,278, "yellow"),
                 (284,292, "black"),
                 (296,317, "black"),
                 (326,340, "yellow"),
                 (344,352, "green"),
-                (365,369, "black"),
+                (365,369, "green"),
                 (370,376, "black"),
                 (382,400, "black"),
                 (408,420, "black"),
@@ -311,7 +304,6 @@ def plot_all_rmsfs(directories, filename):
     
     #ax_dict = fig.subplot_mosaic(layout, sharey=True,sharex = True,
      #                           gridspec_kw={"hspace":0.5,"wspace":0.15})
-    # Adjust global font sizes using mpl
     plt.figure(figsize = (15,5))
     for key in list(directories.keys()):
         for rep in directories[key][1:]:
@@ -404,18 +396,14 @@ def plot_dist_two(directories, selection1, selection2, sufix = ""):
     plt.close()
 
 
-def pca_for_all(directories, selection, dist = "full", raw_pos = "True", start = 0, stop = -1, step = 10):
-    data = []
-    angles_bool = True
+def pca_for_all(directories, selection):
+
     for key in list(directories.keys()):
         for rep in directories[key][1:]:
             os.chdir(f"{home}/data/{key}/{rep}/")
             prot = Protein("./aligned_protfound.gro", "./aligned_protfound.xtc", "resid 1-469")
-            temp = prot.get_features(selection = selection,dist = dist,raw_pos = raw_pos, start = start,angles = angles_bool, stop = stop, step  = step)
-            data.append(temp)
-    data = np.concatenate(data, axis = 0)
-    pca = prot.pca(start = start, stop = stop, step = step, data = data) 
-    return pca
+            dist = prot.pca(selection = selection)
+    return dist 
     os.chdir(home)
 
 
@@ -469,136 +457,34 @@ def recorrer_string(string):
     
 
     
-def applycluster(directories, selection, projector, classifier, structured = True, selection2= None,dist = "full",raw_pos = "True",
-                original_data = None,
-                pcca_map = False,
-                pcca_prob = None):
+def applycluster(directories, selection, projector, classifier, selection2= None, original_data = None, pcca_map = False):
 
     dict_results = {}
     dict_cluster_list = {}
-    angles_bool = True
-    if structured:
-        for key in list(directories.keys()):
-            for rep in directories[key][1:]:
-                os.chdir(f"{home}/data/{key}/{rep}/")
-                print(f"working on {home}/data/{key}/{rep}/")
-                prot = Protein("./aligned_protpsk.gro", "./aligned_protpsk.xtc", "resid 1-469")
-                if key == "2pmlkl" and rep == "rep0":
-                    step = 15
-                elif key == "normalmlkl" and rep == "rep0":
-                    step =10
-                else:
-                    step = 50
-                data = prot.get_features(selection, dist = dist, raw_pos = raw_pos, angles = angles_bool, step = step)
-                if "alpha" in key:
-                    #print(key)
-                    selection_s = recorrer_string(selection)
-                else:
-                    selection_s = selection
+    for key in list(directories.keys()):
+        for rep in directories[key][1:]:
+            os.chdir(f"{home}/data/{key}/{rep}/")
+            print(f"working on {home}/data/{key}/{rep}/")
+            prot = Protein("./aligned_protpsk.gro", "./aligned_protpsk.xtc", "resid 1-469")
             
-                data = prot.get_features(selection_s, dist = dist, raw_pos = raw_pos,angles = angles_bool,  step = step)
-                #print(selection)
-                
-                projection = projector.transform(data)
-                clusterization = classifier.transform(projection)
-                #print(f"##############################")
-                #print(f"{clusterization}\n#####################################")
-            
-                if len(original_data) >0 :
-                    sns.kdeplot(x = original_data[:,0],y = original_data[:,1], levels = 1, thresh = 0.05)
-                plt.savefig(f"{key}{rep}test.png")
-
-            
-
-                plt.scatter(*projection.T, c= clusterization, alpha = 0.1)
-                plt.scatter(*classifier.cluster_centers.T, marker = "o", c = "black")
-
-
-                for i in range(classifier.n_clusters):
-                    plt.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
-
-
-                plt.savefig(f"{key}{rep}classification.png")
-                plt.close()
-                unique, counts = np.unique(clusterization, return_counts=True)
-                percentages = counts*100/len(clusterization)
-                dict_clusters = {}
-                for value, percentage in zip(unique, percentages):
-                    dict_clusters[f"{value}"] = percentage
-
-                dict_results[f"{key}_{rep}"] = dict_clusters
-                dict_cluster_list[f"{key}_{rep}"] = clusterization
-
-                if pcca_map:
-                    projections_pcca = [pcca_map[val] for val in clusterization]
-                    prot.write_cluster_trajs(projections_pcca, step)
-                    plt.close()
-                    plt.plot(projections_pcca)
-                    plt.savefig("{key}{rep}timeseries.png")
-
-                if pcca_prob is not None:
-                    prob_prob = [pcca_prob[microstate] for microstate in clusterization]
-                    prob_prob = np.array(prob_prob)
-
-                    prob_prob = prob_prob[np.any(prob_prob > 0.0, axis=1)]
-                    #print(f"######## The shape of prob is {prob_prob.shape}, and the max value is {np.max(prob_prob)}")
-                    average = np.mean(prob_prob, axis = 0)
-                    print(average)
-                    average = average.flatten()
-                    print(np.sum(average))
-                    print(dict_results)
-                    dict_clusters = {}
-                    for i in range(prob_prob.shape[1]):
-                        dict_clusters[f"{i}"] = average[i]
-
-                    dict_results[f"{key}_{rep}"] = dict_clusters
-                    print(dict_results)
-                    #print(f"############### {prob_prob.shape}")
-
-                    for i in range(prob_prob.shape[1]):
-                        most_probable = np.argmax(prob_prob[:,i])
-                        value = prob_prob[most_probable,i]
-                        value = int(100*value)
-                        prot.u.trajectory[most_probable]
-                        #prot.u.atoms.write(f"frame{most_probable*step}_clus{i}_{value}.gro")
-                       
-                        
-                        traj = np.where(prob_prob[:,i]>0)
-                        traj = traj[0] * step
-                        traj = traj.tolist()
-
-                        #print(traj)
-                        #prot.u.atoms.write(f"cluster_{i}.xtc", frames = prot.u.trajectory[traj])
-                        
-
-                    
-
-
-
-    else:
-        for path in directories:
-            os.chdir(f"{home}/")
-            print(f"working on {home}/ and {path}")
-            #print(path[0], path[1], "resid 1-469")
-            prot = Protein(path[0], path[1], "resid 1-469")
-                
-            #data = prot.get_features(selection, dist = dist, raw_pos = raw_pos, step = 50)
-            if "alpha" in path:
-                #print(path)
+            data = prot.get_features(selection)
+            if "alpha" in key:
+                print(key)
                 selection_s = recorrer_string(selection)
             else:
                 selection_s = selection
-            step = 1
-            data = prot.get_features(selection_s, dist = dist, raw_pos = raw_pos,angles = angles_bool, step = step)
-            #print(selection)
+            
+            data = prot.get_features(selection_s)
+            print(selection)
+
                 
             projection = projector.transform(data)
             clusterization = classifier.transform(projection)
-            #print(f"##############################")
-            #print(f"{clusterization}\n#####################################")
-            
 
             
+            if len(original_data) >0 :
+                sns.kdeplot(x = original_data[:,0],y = original_data[:,1], levels = 1, thresh = 0.05)
+
 
             plt.scatter(*projection.T, c= clusterization, alpha = 0.1)
             plt.scatter(*classifier.cluster_centers.T, marker = "o", c = "black")
@@ -608,62 +494,22 @@ def applycluster(directories, selection, projector, classifier, structured = Tru
                 plt.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
 
 
-            plt.savefig(f"classification.png")
+            plt.savefig(f"{key}{rep}classification.png")
             plt.close()
             unique, counts = np.unique(clusterization, return_counts=True)
             percentages = counts*100/len(clusterization)
             dict_clusters = {}
             for value, percentage in zip(unique, percentages):
                 dict_clusters[f"{value}"] = percentage
-            
 
-            folder = path[0].split("/")
-            
-            dict_results[f"{folder[-4]}{folder[-3]}_{folder[-2]}_{folder[-1]}"] = dict_clusters
-            dict_cluster_list[f"{folder[-4]}{folder[-3]}_{folder[-2]}_{folder[-1]}"] = clusterization
+            dict_results[f"{key}_{rep}"] = dict_clusters
+            dict_cluster_list[f"{key}_{rep}"] = clusterization
 
             if pcca_map:
                 projections_pcca = [pcca_map[val] for val in clusterization]
-                prot.write_cluster_trajs(projections_pcca, step = step)
-                plt.close()
-                plt.plot(projections_pcca)
-                plt.savefig(f"{folder[-1]}{folder[-2]}timeseries.png")
-
-        
-            if pcca_prob is not None:
-                prob_prob = [pcca_prob[microstate] for microstate in clusterization]
-                prob_prob = np.array(prob_prob)
-                prob_prob = prob_prob[np.any(prob_prob > 0, axis=1)]
-                average = np.mean(prob_prob, axis = 0)
-
-                print(f"######## The shape of prob is {prob_prob.shape}, and the max value is {np.max(prob_prob)}")
-                average = average.flatten()
-                print(average)
-                dict_clusters = {}
-                for i in range(prob_prob.shape[1]):
-                    dict_clusters[f"{i}"] = average[i]
+                prot.write_cluster_trajs(projections_pcca)
 
 
-
-                dict_results[f"{folder[-4]}{folder[-3]}_{folder[-2]}_{folder[-1]}"] = dict_clusters
-
-
-
-                for i in range(prob_prob.shape[1]):
-                    most_probable = np.argmax(prob_prob[:,i])
-                    value = prob_prob[most_probable,i]
-                    value = int(100*value)
-                    prot.u.trajectory[most_probable]
-                    #prot.u.atoms.write(f"frame{most_probable*step}_clus{i}_{value}.gro")
-                       
-                        
-                    traj = np.where(prob_prob[:,i]>0.6)
-                    traj = traj[0] * step
-                    traj = traj.tolist()
-
-                    #print(traj)
-                    #prot.u.atoms.write(f"cluster_{i}.xtc", frames = prot.u.trajectory[traj])
-                        
 
     return dict_results, dict_cluster_list
 
@@ -815,6 +661,30 @@ def dir_hb_visualization(directories, filenames):
                 hb_network_visualization(adj_mat, pos_file = f"./clustered_traj_{filename}.gro", sufix = f"_{filename}")
 
 
+def angle_visualization(directories, filename):
+    
+    for key in list(directories.keys()):
+        for rep in directories[key][1:]:
+            os.chdir(f"{home}/data/{key}/{rep}/")
+            tpr_file = f"{home}/data/{key}/new_prod.tpr"
+            print(f"Working on {home}/data/{key}/{rep} on the file {filename}")
+            try:
+                print("trying")
+                prot = Protein(f"./{filename}.gro", f"./{filename}.xtc", "protein")
+                print("#######################trying")
+                le = len(prot.u.trajectory)
+                angles = []
+                alpha = True if "alpha" in key else False
+                for i in prot.u.trajectory[-int(0.5*le)::10]:
+                    angle = prot.angle_4hb_psk(alpha=alpha, ref = True)
+                    angles.append(angle)
+                sns.kdeplot(angles, label = f"{key}-{rep}")
+            except:
+                print(f"Warning: {filename}.xtc/gro may not be present")
+    plt.legend()
+    plt.show()
+    os.chdir(home)
+    plt.savefig("angle_trajectories_other.png")
 
 
 #####################################################################################################################################
@@ -823,169 +693,15 @@ def dir_hb_visualization(directories, filenames):
 
 #####################################################################################################################################
 
-#import matplotlib as mpl
-#mpl.rcParams.update({
-#    "axes.labelsize": 16,   # X and Y label size
-#    "axes.titlesize": 18,   # Title size
-#    "xtick.labelsize": 15,  # X-axis tick size
-#    "ytick.labelsize": 15,  # Y-axis tick size
-#    "legend.fontsize": 15   # Legend font size
-#    })
-
-
-
 
 
 #------ Check files and run rmsd, rmsf, and time rmsf ----------
 
-axvspan = [(7,26,"blue"),
-                (29,55, "blue"),
-                (59,83, "blue"),
-                (101,121, "blue"),
-                (136,161, "red"),
-                (163,175, "red"),
-                (192,196, "black"),
-                (200,228, "black"),
-                (233,248, "green"),
-                (259,278, "black"),
-                (284,292, "black"),
-                (296,317, "black"),
-                (326,340, "black"),
-                (344,352, "green"),
-                (365,369, "black"),
-                (370,376, "black"),
-                (382,400, "black"),
-                (408,420, "black"),
-                (430,441, "black"),
-                (444,448, "black"),
-                (450,459, "black"),
-
-
-    ]
-
-"""
-directories = {
-                f"normalmlkl": [f_dir,"rep1new"],
-                #f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                f"347mlkl": [f_dir, "rep1"],
-                #f"2pmlkl":[f_dir,"rep1updated", "rep2updated"],
-                #f"s345d": [f_dir,"rep0updated", "rep1", "rep2"],
-                f"s345ds347d":[f_dir, "rep0"],
-                #f"4btfalpha_2pmlkl":[f_dir, "rep0"],
-                #f"4btfalpha": [f_dir,"rep0"],
-                #f"q343a": [f_dir,"rep0", "rep1","rep2"],
-                #f"q343a_s345d": [f_dir,"rep0", "rep1"],
-                #f"2ubpmlkl":[f_dir, "rep1"],
-                #f"concatenated":[f_dir, "2pmlkl"],
-}
-
-
-# Set up working directory
-home = f"{f_dir}mlkl_analysis"
-os.chdir(home)
-
-
-
-
-extractions(directories, step = 1)
-check_files(directories)
-rmsds(directories)
-rmsfs(directories)
-plot_rmsds(directories, "rmsd_psk.dat")
-plot_rmsfs(directories, "rmsf_psk.dat")
+#check_files(directories)
+#extractions(directories)
+#rmsds(directories)
+#rmsfs(directories)
 #time_rmsfs(directories)
-
-"""
-
-directories = {
-                f"normalmlkl": [f_dir,"rep0","rep1new", "rep2new"],
-                f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[f_dir,"rep0", "rep1updated", "rep2updated"],
-                f"s345d": [f_dir,"rep0updated", "rep1", "rep2"],
-                f"s345ds347d":[f_dir, "rep0", "rep1", "rep2"],
-                #f"4btfalpha_2pmlkl":[f_dir, "rep0"],
-                #f"4btfalpha": [f_dir,"rep0"],
-                f"q343a": [f_dir,"rep0", "rep1","rep2"],
-                #f"q343a_s345d": [f_dir,"rep0", "rep1"],
-                #f"2ubpmlkl":[f_dir, "rep1"],
-                #f"concatenated":[f_dir, "2pmlkl"],
-}
-
-
-check_files(directories)
-plot_rmsds(directories, "rmsd_psk.dat")
-plot_rmsfs(directories, "rmsf_psk.dat")
-
-fig, ax = plt.subplots(2,1, sharex = True, sharey = True)
-mutants = ["s345d", "s345ds347d", "q343a"]
-phospho = ["345mlkl", "347mlkl", "2pmlkl"]
-
-systems = mutants + phospho + ["normalmlkl"]
-
-changes = {"345mlkl": "345pmlkl",
-            "347mlkl" : "347pmlkl",
-            "normalmlkl": "wildmlkl"}
-
-label_map = {systems[i]: changes[systems[i]] if systems[i] in list(changes.keys()) else systems[i] for i in range(len(systems))}
-
-for directory in systems:
-    df_final = None
-    for rep in directories[directory][1:]:
-        temp_data = pd.read_csv(f"data/{directory}/{rep}/rmsf_psk.dat")
-        if df_final is None:
-            df_final = temp_data.rename(columns = {"rmsf" : f"{rep}"})
-        else:
-            df_final[f"{rep}"] = temp_data["rmsf"]
-
-    columns = list(df_final.columns[1:])
-    df_final["mean"] = df_final[columns].mean(axis = 1)
-    df_final["error"] = df_final[columns].std(axis = 1)
-    if directory == "normalmlkl": 
-        ax[0].errorbar(df_final["resnum"], df_final["mean"], yerr = df_final["error"],alpha = 0.8, linewidth = 0.6, label = f"{directory}", capsize = 0.5, capthick = 0.4)
-        ax[1].errorbar(df_final["resnum"], df_final["mean"], yerr = df_final["error"],alpha = 0.8,  linewidth = 0.6, label = f"{directory}", capsize = 0.5, capthick = 0.4)
-        #ax[0].plot(df_final["resnum"], df_final["mean"],  label = f"{label_map[directory]}", linewidth = 0.5)
-        #ax[1].plot(df_final["resnum"], df_final["mean"], label = f"{label_map[directory]}", linewidth = 0.5)
-    elif directory in phospho:
-        ax[0].errorbar(df_final["resnum"], df_final["mean"], yerr = df_final["error"],alpha = 0.8, linewidth = 0.6,capsize = 0.5,capthick = 0.4, label = f"{directory}")
-        #ax[0].plot(df_final["resnum"], df_final["mean"],  label = f"{label_map[directory]}", linewidth = 0.5)
-    elif directory in mutants:
-        ax[1].errorbar(df_final["resnum"], df_final["mean"], yerr = df_final["error"],alpha = 0.8, linewidth = 0.6,capsize = 0.50, capthick = 0.4, label = f"{directory}")
-        #ax[1].plot(df_final["resnum"], df_final["mean"], label = f"{label_map[directory]}", linewidth = 0.5)
-    print("this is the final:" , df_final)
-
-    for axv in axvspan:
-        ax[0].axvspan(axv[0], axv[1], facecolor = axv[2], alpha = 0.03, edgecolor = "none")
-        ax[1].axvspan(axv[0], axv[1], facecolor = axv[2], alpha = 0.03, edgecolor = "none")
-ax[0].legend()
-ax[1].legend()
-ax[0].set_xlim(190,450)
-ax[1].set_xlim(190,450)
-ax[0].set_ylim(-1,12)
-ax[1].set_ylim(-1,12)
-ax[1].set_xlabel("Aminoacid")
-ax[0].set_ylabel("RMSF")
-ax[1].set_ylabel("RMSF")
-plt.savefig("rmsfs_final_labels_std.pdf")
-
-
-# ----- Set up the directories we are working with ----------
-"""
-directories = {
-                f"normalmlkl": [f_dir, "rep0"],# "rep1", "rep2"],
-                f"345mlkl": [f_dir, "rep0"],# "rep1", "rep2"],
-                #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[f_dir, "rep0", "rep1"],# "rep2"],
-                #f"s345d": [f_dir,"rep1"],
-                #f"s345ds347d":[f_dir, "rep0"],
-                #f"s345ds347dalpha":[f_dir, "rep0"],
-                #f"4btfalpha": [f_dir,"rep0"],
-                #f"4btfalpha_2pmlkl": [f_dir,"rep0"],
-                #f"q343a": [f_dir,"rep0", "rep1"],
-                f"q343a_s345d": [f_dir,"rep0"],# "rep1"],
-                f"2ubpmlkl":[f_dir, "rep1"],
-                f"concatenated":[f_dir, "2pmlkl"],
-}
 
 
 
@@ -996,12 +712,12 @@ directories = {
 files = ["rmsd_4hbbrace.dat", "rmsd_found.dat", "rmsd_psk.dat"]
 files = ["rmsd_4hbbrace.dat", "rmsd_found.dat", "rmsd_psk.dat"]
 
-for file in files:
+#for file in files:
 #    plot_rmsds(directories, file)
 #    plot_main_rmsds(directories, file)
-    plot_rmsfs(directories, file.replace("rmsd", "rmsf"))
+#    plot_rmsfs(directories, file.replace("rmsd", "rmsf"))
 #    plot_time_rmsfs(directories, file.replace("rmsd", "time_rmsf"))
-    #plot_time_individual_rmsfs(directories, file.replace("rmsd", "time_rmsf"))
+#    plot_time_individual_rmsfs(directories, file.replace("rmsd", "time_rmsf"))
 
 
 
@@ -1010,21 +726,142 @@ for file in files:
 # ----- Set up the directories we are working with ----------
 
 directories = {
-                f"normalmlkl": [f_dir, "rep0"],# "rep1", "rep2"],
-                f"345mlkl": [f_dir, "rep0"],# "rep1", "rep2"],
+                f"normalmlkl": [f_dir, "rep0", "rep1", "rep2"],
+                #f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
                 #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                f"2pmlkl":[f_dir, "rep0", "rep1"],# "rep2"],
-                f"concatenated":[f_dir, "2pmlkl"],# "rep2"],
+                #f"2pmlkl":[f_dir, "rep0"],# "rep1", "rep2"],
                 #f"s345d": [f_dir,"rep1"],
                 #f"s345ds347d":[f_dir, "rep0"],
-                #f"s345ds347dalpha":[f_dir, "rep0"],
-                #f"4btfalpha": [f_dir,"rep0"],
-                #f"4btfalpha_2pmlkl": [f_dir,"rep0"],
+                f"s345ds347dalpha":[f_dir, "rep0"],
+                f"4btfalpha": [f_dir,"rep0"],
+                f"4btfalpha_2pmlkl": [f_dir,"rep0"],
                 #f"q343a": [f_dir,"rep0", "rep1"],
                 #f"q343a_s345d": [f_dir,"rep0", "rep1"],
-                #f"2ubpmlkl":[f_dir, "rep1"],
+                f"2ubpmlkl":[f_dir, "rep1"],
 }
 
+
+
+#angle_visualization(directories, "aligned_protpsk")
+
+
+
+trajs = []
+gros= []
+
+#trajs = [f"clustered_traj_{i}.xtc" for i in range(3)]
+#gros = [f"clustered_traj_{i}.gro" for i in range(3)]
+
+
+"""
+gros += [
+            "../normalmlkl/plumed2distnew/start.gro",
+            "../normalmlkl/plumed2distrep2/start.gro",
+            "../normalmlkl/rep1new/production/test.gro",
+            "../normalmlkl/consistent_plumed_r0/com_plumed/start.gro",
+            "../normalmlkl/rep0/production/centered_prot.gro",
+            "../345mlkl/plumed2distnew/start.gro",
+
+]
+trajs += [
+            "../normalmlkl/plumed2distnew/prod.xtc",
+            "../normalmlkl/plumed2distrep2/prod.xtc",
+            "../normalmlkl/rep1new/production/test.xtc",
+            "../normalmlkl/consistent_plumed_r0/com_plumed/start.gro",
+            "../normalmlkl/rep0/production/centered_prot.xtc",
+            "../345mlkl/plumed2distnew/prod.xtc",
+
+]
+"""
+trajs += ["s345ds347d_alpha.pdb",
+            "q343a_alpha.pdb",
+            "wild_alpha.pdb",
+            #"../normalmlkl/steermd/test.xtc",
+            #"../normalmlkl/nosteermd/test.xtc",
+            #"../345mlkl/steermd/test.xtc",
+            #"../345mlkl/nosteermd/test.xtc",
+            #"../347mlkl/steermd/test.xtc",
+            #"../347mlkl/nosteermd/test.xtc",
+            #"../2pmlkl/steermd/test.xtc",
+            #"../2pmlkl/nosteermd/test.xtc",
+            #"../s345d/steermd/test.xtc",
+            #"../s345d/nosteermd/test.xtc",
+            "data/normalmlkl/rep0/cluster_2.xtc",
+            "data/2pmlkl/rep0/cluster_0.xtc",
+            "data/2pmlkl/rep0/cluster_1.xtc",
+            #"data/2pmlkl/rep0/cluster_2.xtc",
+            ]
+
+
+gros += ["s345ds347d_alpha.pdb",
+            "q343a_alpha.pdb",
+            "wild_alpha.pdb",
+            #"../normalmlkl/steermd/test.gro",
+            #"../normalmlkl/nosteermd/test.gro",
+            #"../345mlkl/steermd/test.gro",
+            #"../345mlkl/nosteermd/test.gro",
+            #"../347mlkl/steermd/test.gro",
+            #"../347mlkl/nosteermd/test.gro",
+            #"../2pmlkl/steermd/test.gro",
+            #"../2pmlkl/nosteermd/test.gro",
+            #"../s345d/steermd/test.gro",
+            #"../s345d/nosteermd/test.gro",
+            "data/normalmlkl/rep0/clustered_traj_2.gro",
+            "data/2pmlkl/rep0/clustered_traj_0.gro",
+            "data/2pmlkl/rep0/clustered_traj_1.gro",
+            #"data/2pmlkl/rep0/clustered_traj_2.gro",
+
+            ]
+
+
+#mapping_colors = ["#440154", "#22A884", "#FDE725"]
+
+
+angles = []
+prefix = f_dir + "mlkl_analysis/data/2pmlkl/rep0/"
+for gro, traj in zip(gros,trajs):
+    temp_angle = []
+    print(gro, traj)
+    if "alpha" in gro:
+        prot = Protein(gro, traj, selection_string = "protein")
+        print(prot)
+        alpha = True
+    elif "plumed" in gro or "rep0" in gro or "rep1" in gro or "steer" in gro:
+        prot = Protein(gro, traj, selection_string = "protein")
+        alpha = False
+        
+    else:
+        prot = Protein(prefix + gro,prefix + traj, selection_string = "protein")
+        alpha = None
+
+    le = len(prot.u.trajectory)
+    le = int(1*le)
+    if "cluster" in gro:
+        le = 0
+    for ts in prot.u.trajectory[-le::1]:
+        angle = prot.angle_4hb_psk(alpha=alpha, ref = False)
+        if angle > 59 and angle < 60 and "rep0" in gro:
+            prot.u.atoms.write("reference_structure_rep0.gro")
+        temp_angle.append(angle)
+    
+    angles.append(temp_angle)
+    if len(temp_angle)== 1:
+        print("##########################  dsfdsfds    #####################")
+        plt.scatter(temp_angle, [0], label = f"{gro[-20:]}")
+    sns.kdeplot(temp_angle, label = f"{gro[-20:]}")
+plt.legend()
+plt.xlabel("Angle [deg]")
+plt.savefig("angles_ref.png")
+
+
+
+
+
+
+
+
+
+"""
 # ---- Dictionary to plot distances betwoeen to grups of atoms
 dict_dist = {
     "alpha_25_6": ["(resid 344-352 or resid 233-248) and name CA", "resid 365-369 and name CA"],
@@ -1062,51 +899,6 @@ directories = {
                 #f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
                 #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
                 f"2pmlkl":[f_dir, "rep0"],# "rep1"],# "rep2"],
-                f"concatenated":[f_dir, "2pmlkl"],# "rep1"],# "rep2"],
-                #f"s345d": [f_dir,"rep1"],
-                #f"s345ds347d":[f_dir, "rep0"],
-                #f"s345ds347dalpha":[f_dir, "rep0"],
-                #f"4btfalpha": [f_dir,"rep0"],
-                #f"4btfalpha_2pmlkl": [f_dir,"rep0"],
-                #f"q343a": [f_dir,"rep0", "rep1"],
-                #f"q343a_s345d": [f_dir,"rep0", "rep1"],
-                #f"2ubpmlkl":[f_dir, "rep1"],
-}
-
-
-#print("generation of tprs")
-#generate_tprs(directories)
-#print(" Finish generation of tprs")
-
-#extract_xtc(directories, batch = True)
-extractions(directories, step = 1)
-#check_files(directories)
-
-
-#run_hb_protein_protein(directories) # Run hbonds for aligned_prot. files
-for i in range(0,3): # Run hbobds for the clusters
-    #run_hb_protein_protein(directories, filename = f"clustered_traj_{i}", sufix = f"_clust{i}") # Output a file called hbonds_data_clust{i}.dat
-    plot_hb_data(directories, sufix = f"_clust{i}")
-filenames = ["0", "1", "2"]
-#plot_hb_data(directories, sufix =f"")
-#dir_hb_visualization(directories, filenames)
-
-#plot_hb_data(directories)
-# ---------------
-
-
-
-"""
-
-
-# ----- Set up the directories we are working with ----------
-
-directories = {
-                f"normalmlkl": [f_dir, "rep0", "rep2new"],
-                #f"345mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                #f"2pmlkl":[f_dir, "rep0"],# "rep1"],# "rep2"],
-                f"concatenated":[f_dir, "2pmlkl"],# "rep1"],# "rep2"],
                 #f"s345d": [f_dir,"rep1"],
                 #f"s345ds347d":[f_dir, "rep0"],
                 #f"s345ds347dalpha":[f_dir, "rep0"],
@@ -1124,6 +916,25 @@ directories = {
 
 #extract_xtc(directories, batch = True)
 #extractions(directories, step = 1)
+#check_files(directories)
+
+
+#run_hb_protein_protein(directories) # Run hbonds for aligned_prot. files
+for i in range(0,3): # Run hbobds for the clusters
+    #run_hb_protein_protein(directories, filename = f"clustered_traj_{i}", sufix = f"_clust{i}") # Output a file called hbonds_data_clust{i}.dat
+    plot_hb_data(directories, sufix = f"_clust{i}")
+filenames = ["0", "1", "2"]
+#plot_hb_data(directories, sufix =f"")
+dir_hb_visualization(directories, filenames)
+
+#plot_hb_data(directories)
+# ---------------
+
+
+
+
+
+
 
 
 
@@ -1132,10 +943,10 @@ directories = {
 
 # ------- Reset the directories we are wotking with ---------
 directories = {
-                f"normalmlkl": [f_dir, "rep0", "rep2new"],
+#                f"normalmlkl": [d_dir, "rep0"],
 #                f"345mlkl": [d_dir, "rep0"],
 #                #f"347mlkl": [d_dir, "rep0"],
-                f"2pmlkl":[f_dir, "rep0"],
+                f"2pmlkl":[f_dir, "rep0"]#, "rep1"],
 #                f"s345d": [f_dir,"rep1"],
 #                #f"q343a": [c_dir,"rep0", "rep1"],
 #                f"q343a_s345d": [c_dir,"rep0"],
@@ -1184,25 +995,23 @@ selection_string += ") and name CA"
 # -------- Reset the selection string dependeing on needs ------ 
 selection_string = "(resid 6-469 and name CA)"
 
-#print(selection_string)
+print(selection_string)
 
 
 
 
 
 
-dist = "inter"
-raw_pos = False
-selection_string = ["resid 6-120 and name CA", "resid 137-180 and name CA", "resid 193-456 and name CA"]
-#selection_string = "(resid 6-469 and name CA)"
+
+
 
 # ------ Do PCA and return the data and the pca model -----
 # ------ Only one element should be in the directory ------
 # In this case we are using only 2pmlkl rep0
-data, pca = pca_for_all(directories, selection_string, dist = dist, raw_pos = raw_pos)
-#print(data, "pca", pca)
+data, pca = pca_for_all(directories, selection_string)
+print(data, "pca", pca)
 data_fitted = pca.transform(data)
-#print(data_fitted.shape)
+print(data_fitted.shape)
 
 
 
@@ -1212,7 +1021,7 @@ os.chdir(f"{home}/data/2pmlkl/rep0/")
 
 
 # ------- Generates the classifier model for 2pmlkl rep0 -----------
-protein = Protein("aligned_protpsk.gro", "aligned_protpsk.xtc", "protein")
+protein = Protein("aligned_protpsk.gro", "aligned_protpsk.xtc", selection_string)
 classifier = protein.cluster(data_fitted, n_clusters = 50,sufix = "tica")
 
 assignments = classifier.transform(data_fitted)
@@ -1221,22 +1030,20 @@ assignments = classifier.transform(data_fitted)
 # ------- plot the cluster and its classification --------------
 plt.close()
 fig, ax = plt.subplots()
-ax.scatter(*data_fitted.T, c = assignments, alpha = 0.2)
-ax.scatter(*classifier.cluster_centers.T, marker = "o", c = "black", alpha = 0.2)
+ax.scatter(*data_fitted.T, c = assignments)
+ax.scatter(*classifier.cluster_centers.T, marker = "o", c = "black")
 for i in range(classifier.n_clusters):
     ax.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
 ax.set_xlabel("PC1")
 ax.set_ylabel("PC2")
 fig.savefig("clusterannotate.png")
 
-plt.close()
-sns.kdeplot(x = classifier.cluster_centers[:,0], y = classifier.cluster_centers[:,1], fill = True, thresh = 0, levels = 100, cmap = "Spectral")
-plt.savefig("clustera_kdeplot.png")
+
 
 # ----- Generates Markov State Model based on the clusters passed -----------
 from deeptime.markov.msm import MaximumLikelihoodMSM
 msm = MaximumLikelihoodMSM().fit(assignments, lagtime = 1).fetch_model()
-#print(f"Number of states: {msm.n_states}")
+print(f"Number of states: {msm.n_states}")
 
 
 
@@ -1270,8 +1077,8 @@ threshold = 1e-2
 title = f"Transition matrix with connectivity threshold {threshold:.0e}"
 G = nx.DiGraph()
 ax.set_title(title)
-#for i in range(msm.n_states):
-G.add_node(i, title=f"{i+1}")
+for i in range(msm.n_states):
+    G.add_node(i, title=f"{i+1}")
 for i in range(msm.n_states):
     for j in range(msm.n_states):
         if msm.transition_matrix[i, j] > threshold:
@@ -1283,7 +1090,7 @@ nx.draw_networkx_nodes(G, pos, ax=ax)
 nx.draw_networkx_labels(G, pos, ax=ax, labels=nx.get_node_attributes(G, 'title'));
 nx.draw_networkx_edges(G, pos, ax=ax, arrowstyle='-|>',
                        connectionstyle='arc3, rad=0.3');
-#print("plotgi")
+print("plotgi")
 fig.savefig("graph.png")
 
 
@@ -1291,29 +1098,17 @@ fig.savefig("graph.png")
 
 #--------- Use pccs to coarse grain the MSM, here i am using 3 states ---------
 pcca = msm.pcca(n_metastable_sets=3)
-#print(pcca.coarse_grained_transition_matrix)
-#print(pcca.metastable_distributions)
-plt.close()
-distributions = pcca.metastable_distributions
-plt.plot(distributions[0])
-plt.plot(distributions[1])
-plt.plot(distributions[2])
-plt.savefig("distributions.png")
-plt.close()
-#print(msm.stationary_distribution())
+print(pcca.coarse_grained_transition_matrix)
+
+
+
 
 # ---- Use membership probabilities to compute the membership for each metastable state
 # ---- In this case the criteria is the max probability is enough to belong to the cluster
-memberships = pcca.memberships # Return a probability vector that contain the probability for each onf the metastable states
-plt.plot(memberships[:,0])
-plt.plot(memberships[:,1])
-plt.plot(memberships[:,2])
-plt.savefig("memberships.png")
-plt.close()
-mapping_colors = ["#440154", "#22A884", "#FDE725", "red"]
-#print("####################3######################### /n",memberships)
+memberships = pcca.memberships
+
+mapping_colors = ["#440154", "#22A884", "#FDE725"]
 max_indices = [np.argmax(row) for row in memberships]
-#print(max_indices)
 max_colors = [mapping_colors[np.argmax(row)] for row in memberships] # Dim number of clusters
 map_assignments = [max_colors[value] for value in assignments]
     
@@ -1321,7 +1116,7 @@ map_assignments = [max_colors[value] for value in assignments]
 
 # ----- Plot the metastable states in the principal components
 plt.close()
-plt.scatter(*data_fitted.T, c = map_assignments, alpha = 0.1)
+plt.scatter(*data_fitted.T, c = map_assignments)
 plt.scatter(*classifier.cluster_centers.T, c = max_colors)
 for i in range(classifier.n_clusters):
     plt.annotate(f"{i}", classifier.cluster_centers[i], xytext=classifier.cluster_centers[i]+.1)
@@ -1340,43 +1135,34 @@ plt.close()
 
 
 # ----- Plot the probability of belonging to a particular metastable state
-fig, axes = plt.subplots(1, 3, figsize=(15, 10))
+fig, axes = plt.subplots(1, 2, figsize=(15, 10))
 for i in range(len(axes)):
     ax = axes[i]
     ax.set_title(f"Metastable set {i+1} assignment probabilities")
-    #print(data_fitted.shape, pcca.memberships[assignments,i])
+    print(data_fitted.shape, pcca.memberships[assignments,i])
     ax.scatter(*data_fitted.T, c=pcca.memberships[assignments, i], cmap=plt.cm.Blues)
 norm = mpl.colors.Normalize(vmin=0, vmax=1)
 fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=plt.cm.Blues), ax=axes, shrink=.8);
 fig.savefig("newplot.png")
 plt.close()
 
-fig, axes = plt.subplots(1, 3, figsize=(15, 10))
-for i in range(len(axes)):
-    ax = axes[i]
-    ax.set_title(f"{np.argmax(pcca.memberships[assignments,i])}")
-    ax.plot(pcca.memberships[assignments, i])
-fig.savefig("probabilityplot.png")
-plt.close()
-    
-prob_array = {microstate : pcca.memberships[microstate, :] for microstate in range(pcca.memberships.shape[0])}
+
 
 
 # ---------- Directories to be included in the barplot of th emetastable states ------------
 directories = {
-                f"normalmlkl": [f_dir, "rep0", "rep2new", "rep1new"],#, "rep2"],
-                #f"345mlkl": [f_dir, "rep0" ,"rep1", "rep2"],
-                #f"347mlkl": [f_dir, "rep0", "rep1", "rep2"],
-                #f"2pmlkl":[f_dir, "rep0", "rep1updated", "rep2updated"],
-                f"s345d": [f_dir,"rep0updated", "rep1", "rep2"],
-                f"s345ds347d":[f_dir, "rep0", "rep1", "rep2"],
+                f"normalmlkl": [f_dir, "rep0", "rep1"],#, "rep2"],
+                f"345mlkl": [f_dir, "rep0" ,"rep1"], #"rep2"],
+                f"347mlkl": [f_dir, "rep0"],# "rep1", "rep2"],
+                f"2pmlkl":[f_dir, "rep0", "rep2"],# "rep2"],
+                f"s345d": [f_dir,"rep0", "rep1"],
+                f"s345ds347d":[f_dir, "rep0"],
             #f"s345ds347dalpha":[f_dir, "rep0"],
                 #f"4btfalpha": [f_dir,"rep0"],
                 #f"4btfalpha_2pmlkl": [f_dir,"rep0"],
-                f"q343a": [f_dir,"rep0", "rep1", "rep2"],
-                #f"q343a_s345d": [f_dir,"rep0", "rep1"],
-                #f"2ubpmlkl":[f_dir, "rep1"],
-                #f"concatenated":[f_dir, "2pmlkl"],# "rep1"],# "rep2"],
+                f"q343a": [f_dir,"rep0", "rep1"],
+                f"q343a_s345d": [f_dir,"rep0", "rep1"],
+                f"2ubpmlkl":[f_dir, "rep1"],
 }
 
 
@@ -1387,91 +1173,25 @@ directories = {
 #selection_string = "(resid 7-83 or resid 100-122 or resid 134-175 or resid 182-460) and name CA"
 
 plt.close()
-perce, cluster_list = applycluster(directories,
-                                    selection_string,
-                                    pca, 
-                                    classifier,
-                                    structured = True,
-                                    dist = dist,
-                                    raw_pos = raw_pos,
-                                    original_data = data_fitted, 
-                                    pcca_map = max_indices,
-                                    pcca_prob = prob_array
-                                    )
-
-
-
-
-unst_directories = [
-
-#["../normalmlkl/plumed2distnewrep2/start.gro", "../normalmlkl/plumed2distnewrep2/prod.xtc"],
-#["../normalmlkl/consistent_plumed_r0/com_plumed/start.gro", "../normalmlkl/consistent_plumed_r0/com_plumed/prod.xtc"],
-#["../345mlkl/umbrella/umbrella_sampling/out_concatenated.gro", "../345mlkl/umbrella/umbrella_sampling/out_concatenated.xtc"],
-#["../normalmlkl/steermd/test.gro", "../normalmlkl/steermd/test.xtc"],
-#["../normalmlkl/nosteermd/test.gro", "../normalmlkl/nosteermd/test.xtc"],
-#["../345mlkl/steermd/test.gro", "../345mlkl/steermd/test.xtc"],
-#["../345mlkl/nosteermd/test.gro", "../345mlkl/nosteermd/test.xtc"],
-#["../347mlkl/steermd/test.gro", "../347mlkl/steermd/test.xtc"],
-#["../347mlkl/nosteermd/test.gro", "../347mlkl/nosteermd/test.xtc"],
-#["../2pmlkl/steermd/test.gro", "../2pmlkl/steermd/test.xtc"],
-#["../2pmlkl/nosteermd/test.gro", "../2pmlkl/nosteermd/test.xtc"],
-#["../s345d/steermd/test.gro", "../s345d/steermd/test.xtc"],
-#["../s345d/nosteermd/test.gro", "../s345d/nosteermd/test.xtc"],
-#["data/2pmlkl/rep0/clustered_traj_0.gro", "data/2pmlkl/rep0/cluster_0.xtc"],
-#["data/2pmlkl/rep0/clustered_traj_1.gro", "data/2pmlkl/rep0/cluster_1.xtc"],
-#["data/2pmlkl/rep0/clustered_traj_2.gro", "data/2pmlkl/rep0/cluster_2.xtc"],
-#["data/2pmlkl/rep0/clustered_traj_0.gro", "data/2pmlkl/rep0/clustered_traj_0.xtc"],
-#["data/normalmlkl/rep0/clustered_traj_0.gro", "data/normalmlkl/rep0/clustered_traj_0.xtc"],
-#["data/2pmlkl/rep0/clustered_traj_1.gro", "data/2pmlkl/rep0/clustered_traj_1.xtc"],
-#["data/2pmlkl/rep0/clustered_traj_2.gro", "data/2pmlkl/rep0/clustered_traj_2.xtc"],
-#"../normalmlkl/plumed2distnewrep1/",
-#"../normalmlkl/plumed2distrep2/",
-#"../345mlkl/plumed2distnew/",
-#"../345mlkl/plumed2distnewrep1/",
-#"../345mlkl/plumed2distnewrep2/",
-#"../2pmlkl/plumed2distnewrep1/",
-#"../2pmlkl/plumed2distnewrep2/",
-#"../2pmlkl/consistent_plumed_r0/path_plumed/",
-#"../345mlkl/consistent_plumed_r0/path_plumed/",
-
-
-]
-
-
-#perce_1, cluster_list_1 = applycluster(unst_directories,
-#                                    selection_string,
-#                                    pca, 
-#                                    classifier,
-#                                    structured = False,
-#                                    dist = dist,
-#                                    raw_pos = raw_pos,
-#                                    pcca_prob = prob_array,
-#                                    original_data = data_fitted, 
-#                                    pcca_map = max_indices)
-
-#perce = perce | perce_1
-#cluster_list = cluster_list | cluster_list_1
-print(perce)
-#print(perce_1)
-
+perce, cluster_list = applycluster(directories, selection_string, pca, classifier, original_data = data_fitted, pcca_map = max_indices)
 print("Perce:",cluster_list)
 
-for key in cluster_list:
-    print(cluster_list[key])
-    print([max_indices[i] for i in cluster_list[key]])
+#for key in cluster_list:
+#    print(cluster_list[key])
+#    print([max_indices[i] for i in cluster_list[key]])
 perce = pd.DataFrame(perce)
 perce = perce.transpose()
 
 
 perce_melted = perce.reset_index().melt(id_vars=["index"], var_name = "Cluster", value_name = "Value")
 perce_melted["pcca"] = perce_melted["Cluster"].apply(lambda x: max_indices[int(x)])
-#mapping_colors = ["#440154", "#22A884", "#FDE725", "red"]
+mapping_colors = ["#440154", "#22A884", "#FDE725"]
 
-color_dict = {i:mapping_colors[i] for i in range(len(mapping_colors))}
-#print(perce_melted)
+color_dict = {0 : mapping_colors[0], 1:  mapping_colors[1], 2: mapping_colors[2]}
+print(perce_melted)
 perce_melted.rename(columns={"index":"Condition"}, inplace=True)
 perce_melted = perce_melted.groupby(["Condition", "pcca"], as_index=False)["Value"].sum()
-#print(perce_melted)
+print(perce_melted)
 plt.close()
 
 import matplotlib as mpl
@@ -1511,3 +1231,4 @@ print(perce)
 #selection = "((resid 182-351 or resid 365-460) and name CA)"
 #protein.align_prot(selection, ref_file = ref)
 
+"""

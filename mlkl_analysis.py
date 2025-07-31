@@ -107,20 +107,27 @@ class Protein:
 
         
 
-    def write_cluster_trajs(self, cluster_list):
+    def write_cluster_trajs(self, cluster_list, step):
         if len(cluster_list) != len(self.u.trajectory):
             print("Warning: The cluster list and the trajectory have different length")
+            print(len(cluster_list), len(self.u.trajectory))
+            print("Well try to make it match:")
+            #print(len(list(range(0, len(self.u.trajectory)-1, step))), len(cluster_list))
+
+        else:
+            print("######################## The cluster list and the trajectory have the same lenght, we can work with thta######")
+            
 
         cluster = set(cluster_list)
         cluster_dict = {}
         for value in cluster:
-            cluster_dict[value] = [i for i, n in enumerate(cluster_list) if n == value]
+            cluster_dict[value] = [i for i, n in zip(list(range(0, len(self.u.trajectory)-1, step)), cluster_list) if n == value]
 
             with mda.Writer(f"clustered_traj_{value}.xtc") as W:
                 count = 0
                 for ts in self.u.trajectory[cluster_dict[value]]:
                     W.write(self.protein)
-                    print(ts.frame)
+                    #print(ts.frame)
                     if count == 0:
                         self.protein.write(f"clustered_traj_{value}.gro")
                     count += 1
@@ -186,39 +193,185 @@ class Protein:
             data.to_csv(f"dist_{sufix}.dat")
         return data
         
+    # Time dependence distance between two groups of atoms
+    def angle_4hb_psk(self, write = False, sufix = "", alpha = None, ref = None):
+        
 
-    def get_features(self, selection = None, start=0, stop=-1, step =1):
+        if alpha is not None:
+            groups = {"h1": ["resid 16-19", "resid 1-3"],
+                    "h2":["resid 25-28", "resid 45-48"],
+                    "h3": ["resid 74-77", "resid 55-58"],
+                    "h4": ["resid 97-100", "resid 112-115"]}
+            psk = ["resid 431-434", "resid 188-191"]
+        else:
+            groups = {"h1": ["resid 21-24", "resid 5-8"],
+                    "h2":["resid 30-33", "resid 50-53"],
+                    "h3": ["resid 79-82", "resid 60-63"],
+                    "h4": ["resid 102-105", "resid 117-120"]}
+            psk = ["resid 436-439", "resid 193-196"]
+
+        fourhb = []
+        for group in groups:
+            vect = self.protein.select_atoms(groups[group][1]).center_of_mass() - self.protein.select_atoms(groups[group][0]).center_of_mass()
+            fourhb.append(vect/np.linalg.norm(vect))
+            
+            if alpha:
+                print(vect)
+
+
+
+        fourhb = np.array(fourhb)
+        fourhb = np.mean(fourhb, axis=0)
+    
+            
+        print("at least start #########################")
+        sel = [groups[group][1] for group in groups]
+        print("at least start #########################")
+        selection = sel[0]
+        for atoms in sel[1:]:
+            selection += f" or {atoms}"
+        top_4hb = self.protein.select_atoms(selection).center_of_mass() - self.protein.select_atoms(psk[0]).center_of_mass()
+            
+        print(selection)
+
+        vect = self.protein.select_atoms(psk[1]).center_of_mass() - self.protein.select_atoms(psk[0]).center_of_mass()
+        print(vect) 
+
+        if ref:
+            print("test")
+            fourhb = top_4hb
+        angle = np.arccos(np.dot(vect,fourhb)/(np.linalg.norm(vect)*np.linalg.norm(fourhb)))
+        angle = np.rad2deg(angle)
+        return angle
+
+    def get_angles(self, ref_selection = None, selection1 = None, selection2 = None):
+        ref_selection = "resid 436-439" if ref_selection is None else ref_selection
+        selection1 = "(resid 7-26 or resid 29-55 or resid 59-83 or resid 101-121) and name CA" # 4hb residues
+        selection2 = "(resid 192-196 or resid 200-228 or resid 259-278 or resid 284-292 or resid 296-317 or resid 326-340) and name CA" # psk residues (only on one side and without the ones that move)
+        
+        sel1 = self.protein.select_atoms(selection1)
+        sel2 = self.protein.select_atoms(selection2)
+        ref = self.protein.select_atoms(ref_selection)
+        vector1 = sel1.positions - ref.center_of_mass()
+        vector2 = sel2.positions - ref.center_of_mass()
+
+        vector1 = vector1 / np.linalg.norm(vector1, axis = 1, keepdims = True)
+        vector2 = vector2 / np.linalg.norm(vector2, axis = 1, keepdims = True)
+        angle = np.arccos(np.dot(vector1, vector2.T)).flatten()
+        #print(angle.shape)
+        return angle.reshape(-1)
+
+
+
+    def get_features(self, selection = None,dist = "full",raw_pos = True,angles = False, start=0, stop=-1, step =1):
         
         sel = self.protein
         sel = sel.select_atoms("name CA")
-        if selection:
-            print(selection)
-            sel = self.u.select_atoms(f"({selection}) and name CA")
-        data = []
-        for ts in self.u.trajectory[start:stop:step]:
-            zero_centered = sel.positions - sel.center_of_mass()
-            data.append(zero_centered.flatten()) #generates a vector (feature vector containing NX3 features)
 
+        
+        if isinstance(selection, list):
+            #print(selection)
+            dist_sel = []
+            selection_string = f"({selection[0]} and name CA) "
+            for i,sele in enumerate(selection):
+                dist_sel.append(self.u.select_atoms(f"({sele}) and name CA"))
+                if i > 0:
+                    selection_string += f" or ({sele} and name CA)"
+            if len(selection) == 1:
+                selection_string = f"({selection[0]} and name CA)"
+            sel = self.u.select_atoms(selection_string)
+        else:
+            sel = self.u.select_atoms(f"({selection}) and name CA")
+            
+        data = []
+        from scipy.spatial.distance import cdist
+
+        
+        for ts in self.u.trajectory[start:stop:step]:
+
+            feats = []
+            if raw_pos:
+                pos = sel.positions
+                zero_centered = pos - sel.center_of_mass()
+                raw_pos_feat = zero_centered.flatten()
+                feats.append(raw_pos_feat)
+            if dist == "full":
+                
+                pos = sel.positions
+                dists = cdist(pos, pos)
+                i, j = np.triu_indices_from(dists, k=1)
+                full_interdist_feat = dists[i,j]
+                feats.append(full_interdist_feat)
+                #print(full_interdist_feat.shape)
+            elif dist == "inter":
+                dist_feats = []
+                for i in range(len(dist_sel)):
+                    for j in range(len(dist_sel)):
+
+                        #if i == j:
+                        #    posi = dist_sel[i].positions
+                        #    posj = dist_sel[j].positions
+                        #    disti = cdist(posi,posj)
+                        #    k, l = np.triu_indices_from(dists, k=1)
+                        #    dists = dists[k,l]
+                        #    dist_feats.append(dist)
+
+                        if i > j:
+                            posi = dist_sel[i].positions
+                            posj = dist_sel[j].positions
+                            
+                            disti = cdist(posi,posj)
+                            flat_dist = disti.flatten()
+                            dist_feats.append(flat_dist)
+                partial_inter_feat = np.concatenate(dist_feats)
+                feats.append(partial_inter_feat)
+            if angles:
+                angle = self.get_angles()
+                
+                feats.append(angle)
+
+            #print("hetettete",feats, feats[1].shape, feats[0].shape)
+            feats = np.concatenate(feats)
+            #print(feats.shape)
+
+
+
+
+            data.append(feats) #generates a vector (feature vector containing NX3 features, or NX3 + NXN features if dist=True)
+        #print(len(data))
         data = np.array(data)
+        #print(data.shape, "##########333")
         return data
         
 
 
 
     # Function computes the PCA for CA atoms for the protein or for the atoms given
-    def pca(self, selection = None, start = 0, stop = -1, step = 1):
+    def pca(self, selection = None, start = 0, stop = -1, step = 1, data = False):
         print("Make sure that your trajectory is aligned before running this function other calculation")
-        sel = self.protein
-        sel = sel.select_atoms("name CA")
-        if selection:
-            sel = self.u.select_atoms(f"({selection}) and name CA")
-        data = []
-        for ts in self.u.trajectory[start:stop:step]:
-            zero_centered = sel.positions - sel.center_of_mass()
-            data.append(zero_centered.flatten()) #generates a vector (feature vector containing NX3 features)
 
-        data = np.array(data)
 
+        #print(data.shape)
+        
+        if data.shape or data:
+            data = data
+        else:
+            sel = self.protein
+            sel = sel.select_atoms("name CA")
+            if selection:
+                sel = self.u.select_atoms(f"({selection}) and name CA")
+        #data = []
+        #for ts in self.u.trajectory[start:stop:step]:
+        #    zero_centered = sel.positions - sel.center_of_mass()
+        #    data.append(zero_centered.flatten()) #generates a vector (feature vector containing NX3 features)
+
+        #data = np.array(data)
+
+
+            test_number = len(sel.atoms)
+            test_number = test_number * 3 + (test_number*(test_number-1))/2 
+            data = self.get_features(selection = selection,dist = True, start = start, stop = stop, step  = step)
+            #print(data.shape, test_number)
         #std = np.std(data, axis = 0)
         #scaler = StandardScaler()
         #scaler.fit(data)
@@ -234,8 +387,8 @@ class Protein:
         plt.plot(proj[:,1], label = "PC2")
         plt.savefig("testi.png")
         plt.close()
-        print(pca.explained_variance_ratio_)
-        print(pca.singular_values_)
+        #print(pca.explained_variance_ratio_)
+        #print(pca.singular_values_)
         return data, pca        
 
 
@@ -405,7 +558,7 @@ class Protein:
         plt.plot(assignments)
         plt.xlabel("time $ns$")
         plt.ylabel("cluster")
-        print("values clusering", assignments)
+        #print("values clusering", assignments)
         plt.savefig(f"tempclus{sufix}.png")
 
         return cluster_optimization

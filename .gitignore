@@ -3,6 +3,9 @@
 *.txt
 *.png
 *.dat
+*.lock
+*.npz
+
 .ipynb_checkpoints
 data
 extract_protein.py
