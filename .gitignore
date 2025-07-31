@@ -1,7 +1,7 @@
 *.xtc
 *.gro
 *.txt
-*.png
+#*.png
 *.dat
 *.lock
 *.npz
